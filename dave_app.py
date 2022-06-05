@@ -1,7 +1,4 @@
-print("Status: Initializing...")
-import tkinter as tk
-from tkinter import ttk
-import tkinter.scrolledtext as scrolledtext
+print("Status: System starting now...")
 
 import io
 import re
@@ -12,8 +9,12 @@ import nltk
 from nltk.util import ngrams
 from nltk.tokenize import regexp_tokenize
 
+import tkinter as tkr
+from tkinter import ttk
+import tkinter.scrolledtext as scrolled_text
 
-class SpellingCheckerGUI(tk.Tk):
+
+class SpellingCheckerGUI(tkr.Tk):
 
     def __init__(self):
         """
@@ -24,119 +25,153 @@ class SpellingCheckerGUI(tk.Tk):
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
-        # reading in the dictionary
-        with io.open("dictionary.txt", "r", encoding="utf-16") as f:
-            dict_text = f.read()
+        # reading the dict.txt
+        with io.open("dict.txt", "r", encoding="utf-16") as f:
+            dict_contents = f.read()
 
-        # create dictionary list
-        self.dictionary = sorted(set(dict_text.split('\n')))
+        # create dict list
+        self.dictList= sorted(set(dict_contents.split('\n')))
         self.non_words = []  # empty list of non-words
 
         self.create_layout()
-        print("\nStatus: Ready\n")
+        print("\nStatus: System started\n")
 
     def create_layout(self):
-        """
-        This is where the layout of the GUI is created.
-        """
 
-        # Spread out the canvas and the frame
-        HEIGHT = 800
-        WIDTH = 600
-        canvas = tk.Canvas(height=HEIGHT, width=WIDTH)
+        #This is where the layout of the GUI is created.
+
+        # Set the canvas and the frame
+        canvas = tkr.Canvas(height=800, width=600)
         canvas.pack()
-        frame = tk.Frame(bg='#F0F0F0', bd=1)  # this is the gray frame
+        frame = tkr.Frame(bg='#F0F0F0', bd=1)  # this is the light gray background
         frame.place(relx=0.5, rely=0.1, relwidth=0.75, relheight=0.8, anchor='n')
 
-        title = tk.Label(frame, text="Spelling Checker", anchor='n',
+        title = tkr.Label(frame, text="Spelling Checker", anchor='n',
                          fg="black", font="none 23 bold")
         title.place(relx=0.20, rely=0.01, relwidth=0.60)
         
         # Provide instructions to the user
-        insTitle = tk.Label(frame, text="Instructions for use:", anchor='w', fg="black", font="none 10 bold")
+        insTitle = tkr.Label(frame, text="Instructions for user(s):", anchor='w', fg="black", font="none 10 bold")
         insTitle.place(relx=0.1, rely=0.07, relwidth=0.60)
-        ins1 = tk.Label(frame, text="1. Enter text in the given area.", anchor='w')
+        ins1 = tkr.Label(frame, text="1. Enter text in the given area.", anchor='w')
         ins1.place(relx=0.1, rely=0.10, relwidth=0.60)
-        ins2 = tk.Label(frame, text="2. Press the SUBMIT button.", anchor='w')
+        ins2 = tkr.Label(frame, text="2. Press the SUBMIT button.", anchor='w')
         ins2.place(relx=0.1, rely=0.13, relwidth=0.60)
-        ins3 = tk.Label(frame, text="3. Double-click a highlighted word to select it.", anchor='w')
+        ins3 = tkr.Label(frame, text="3. Double-click a highlighted word to select it.", anchor='w')
         ins3.place(relx=0.1, rely=0.16, relwidth=0.60)
-        ins4 = tk.Label(frame, text="4. Right-click the selected error word.", anchor='w')
+        ins4 = tkr.Label(frame, text="4. Right-click the selected error word.", anchor='w')
         ins4.place(relx=0.1, rely=0.19, relwidth=0.60)
-        ins5 = tk.Label(frame, text="5. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
+        ins5 = tkr.Label(frame, text="5. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
         ins5.place(relx=0.1, rely=0.22, relwidth=0.60)
 
-        # Label
-        textlabel = tk.Label(frame, text="Enter input here (500 words max)", font="none 10 normal")
+        # Text Label
+        textlabel = tkr.Label(frame, text="Enter input here (500 words max)", font="none 10 normal")
         textlabel.place(relx=0.1, rely=0.26)
         
         # This is the big text box where user puts in their input
-        self.text = scrolledtext.ScrolledText(frame, bg="white", width=50, font="Arial 10")
-        self.text.focus()
+        self.text = scrolled_text.ScrolledText(frame, bg="white", width=50, font="Arial 10")
         self.text.pack(expand=True, fill='both')
         self.text.place(relx=0.1, rely=0.30, relwidth=0.35, relheight=0.4)
 
         # Add popup menu code, binding the right-click to selected text only
-        self.popup_menu = tk.Menu(self, tearoff=0, background='#E0EEEE',
+        self.popup_menu = tkr.Menu(self, tearoff=0, background='#E0EEEE',
                                   fg='black', activebackground='#C1CDCD',
                                   activeforeground='#00008B')
-        self.text.tag_bind("sel", '<Button-3>', self.popup)
+        self.text.tag_bind("sel", '<Button-3>', self.pop_up)
 
         # This is the clear button
-        ResetButton = ttk.Button(frame, text="CLEAR", width=7, command=self.Reset)
+        ResetButton = tkr.Button(frame, text="CLEAR", width=7, command=self.Reset)
         ResetButton.place(relx=0.1, rely=0.71)
 
         # This is the submit button
-        SubmitButton = ttk.Button(frame, text="SUBMIT", width=7, command=self.Submit)
+        SubmitButton = tkr.Button(frame, text="SUBMIT", width=7, command=self.Submit)
         SubmitButton.place(relx=0.20, rely=0.71)
 
-        
-        # This text box below user input box stores. It stores original input
-        originalTextLabel = tk.Label(frame, text="Original Text:", font="none 10 normal")
+        # Original Text Label
+        originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
         originalTextLabel.place(relx=0.1, rely=0.77)
-        self.originalText = scrolledtext.ScrolledText(frame, bg="white", width=50, font="Arial 10")
+
+        # This text area below is user inputted box. It stores original text
+        self.originalText = scrolled_text.ScrolledText(frame, bg="white", width=50, font="Arial 10")
         self.originalText.pack(expand=True, fill='both')
         self.originalText.place(relx=0.1, rely=0.80, relwidth=0.80, relheight=0.4)
 
-        # This says "Dictionary:" on top of the dictionary box
-        VwDict = tk.Label(frame, text="Dictionary:", font="none 10 normal")
+        # Dictionary Text Label
+        VwDict = tkr.Label(frame, text="Dictionary:", font="none 10 normal")
         VwDict.place(relx=0.55, rely=0.26)
 
         # This is the search box below the dictionary
-        self.user_search = tk.StringVar()
-        searchbox = tk.Entry(frame, textvariable=self.user_search)
-        searchbox.place(relx=0.55, rely=0.71, relwidth=0.23)
+        self.userSearch = tkr.StringVar()
+        searchBox = tkr.Entry(frame, textvariable=self.userSearch)
+        searchBox.place(relx=0.55, rely=0.71, relwidth=0.23)
 
-        Button2 = ttk.Button(frame, text="SEARCH", width=9, command=self.Search)
-        Button2.place(relx=0.80, rely=0.71)
+        SearchButton = tkr.Button(frame, text="SEARCH", width=9, command=self.Search)
+        SearchButton.place(relx=0.80, rely=0.71)
 
         # This is the box containing all the Valid Words in the Dictionary (VwDict)
-        self.VwDictList = tk.Listbox(frame, bg='#FFFFFF', fg="black", font="none 10 normal")
+        self.VwDictList = tkr.Listbox(frame, bg='#FFFFFF', fg="black", font="none 10 normal")
 
-        for word in self.dictionary:
-            self.VwDictList.insert(tk.END, word)
+        for word in self.dictList:
+            self.VwDictList.insert(tkr.END, word)
 
         # Scrollbar should be attached to `VwDictList`
-        VwScrollBar = tk.Scrollbar(self.VwDictList, orient=tk.VERTICAL)
+        VwScrollBar = tkr.Scrollbar(self.VwDictList, orient=tkr.VERTICAL)
         VwScrollBar.config(command=self.VwDictList.yview)
-        VwScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
+        VwScrollBar.pack(side=tkr.RIGHT, fill=tkr.Y)
 
         # Placing the dictionary list
         self.VwDictList.pack(expand=True, fill='both')
         self.VwDictList.config(yscrollcommand=VwScrollBar.set)
         self.VwDictList.place(relx=0.55, rely=0.30, relwidth=0.35, relheight=0.4)
 
-    def make_bigram_model(self):
+    def pop_up(self, event):
 
-        return false
+        if self.text_selected():
+            text_selected = self.text.get(*self.selection_ind)
 
-    def make_trigram_model(self):
+            if text_selected in self.non_words:
+                try:
+                    nd = len(self.candidate_words(text_selected))
+                    self.popup_menu.delete(0, nd + 3)
+                    c = self.candidate_words(text_selected)
+                    if (nd == 0):
+                        self.popup_menu.add_command(label="No suggestions.")
 
-        return false
+                    if (nd > 0):
+                        self.popup_menu.add_command(label=f"{c[0][1]} | {c[0][0]}",
+                                                    command=lambda: self.select_correct_word(c[0][0]))
+                        self.popup_menu.add_separator()
+                    
+                    if (nd > 1):
+                            self.popup_menu.add_command(label = f"{1} | {c[1][0]}", command = lambda: self.select_correct_word(f"{c[1][0]}"))
+                    if (nd > 2):
+                            self.popup_menu.add_command(label = f"{2} | {c[2][0]}", command = lambda: self.select_correct_word(f"{c[2][0]}"))
+                    if (nd > 3):
+                            self.popup_menu.add_command(label = f"{3} | {c[3][0]}", command = lambda: self.select_correct_word(f"{c[3][0]}"))
+                    if (nd > 4):
+                            self.popup_menu.add_command(label = f"{4} | {c[4][0]}", command = lambda: self.select_correct_word(f"{c[4][0]}"))
+                    if (nd > 5):
+                            self.popup_menu.add_command(label = f"{5} | {c[5][0]}", command = lambda: self.select_correct_word(f"{c[5][0]}"))
+                    if (nd > 6):
+                            self.popup_menu.add_command(label = f"{6} | {c[6][0]}", command = lambda: self.select_correct_word(f"{c[6][0]}"))
+                    if (nd > 0):
+                        self.popup_menu.add_separator()
+                        self.popup_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
+
+                    self.popup_menu.tk_popup(event.x_root, event.y_root)
+                finally:
+                    self.popup_menu.grab_release()
+            else:
+                pass
+        else:
+            pass
+
+    def Submit(self):
+       return False
 
     def text_selected(self):
         if self.non_words:
-            self.selection_ind = self.text.tag_ranges(tk.SEL)
+            self.selection_ind = self.text.tag_ranges(tkr.SEL)
             if self.selection_ind:
                 return True
             else:
@@ -144,75 +179,21 @@ class SpellingCheckerGUI(tk.Tk):
         else:
             return False
 
-    def popup(self, event):
-
-        if self.text_selected():
-            selected = self.text.get(*self.selection_ind)
-
-            if selected in self.non_words:
-                try:
-
-                    nd = len(self.candidate_words(selected))
-                    self.popup_menu.delete(0, nd + 3)
-
-                    c = self.candidate_words(selected)
-
-                    if nd == 0:
-                        self.popup_menu.add_command(label="No suggestions.")
-                        print("No suggestions.")
-
-                    if nd > 0:
-                        self.popup_menu.add_command(label=f"{c[0][1]} | {c[0][0]}",
-                                                    command=lambda: self.choose_correction(c[0][0]))
-                        self.popup_menu.add_separator()
-                    
-                    if nd > 1:
-                            self.popup_menu.add_command(label = f"{1} | {c[1][0]}", command = lambda: self.choose_correction(f"{c[1][0]}"))
-                    if nd > 2:
-                            self.popup_menu.add_command(label = f"{2} | {c[2][0]}", command = lambda: self.choose_correction(f"{c[2][0]}"))
-                    if nd > 3:
-                            self.popup_menu.add_command(label = f"{3} | {c[3][0]}", command = lambda: self.choose_correction(f"{c[3][0]}"))
-                    if nd > 4:
-                            self.popup_menu.add_command(label = f"{4} | {c[4][0]}", command = lambda: self.choose_correction(f"{c[4][0]}"))
-                    if nd > 5:
-                            self.popup_menu.add_command(label = f"{5} | {c[5][0]}", command = lambda: self.choose_correction(f"{c[5][0]}"))
-                    if nd > 6:
-                            self.popup_menu.add_command(label = f"{6} | {c[6][0]}", command = lambda: self.choose_correction(f"{c[6][0]}"))
-                    if nd > 0:
-                        self.popup_menu.add_separator()
-                        self.popup_menu.add_command(label="Add to dictionary", command=lambda: self.add_to_dict(selected))
-
-                        
-                    self.popup_menu.tk_popup(event.x_root, event.y_root)
-                finally:
-                    self.popup_menu.grab_release()
-
-            else:
-                pass
-        else:
-            pass
-
-    def Submit(self):
-       return false
-
     def Search(self):
-        return false
-
-    def dl_distance(self, s1, s2):
-        return false
+        return False
 
     def candidate_words(self, error):
 
-        return false
+        return False
 
-    def add_to_dict(self, word):
+    def add_into_dictionary(self, word):
 
-        if word.isalpha():
+        if (word.isalpha() and existing_word):
             self.dictionary.append(word)
             self.unigrams.append(word)
             self.counts_u[word] = 1
-            self.model_u[word] = 1 / len(self.dictionary)
-            self.VwDictList.insert(tk.END, word)
+            self.model_u[word] = 1 / len(self.dictList)
+            self.VwDictList.insert(tkr.END, word)
 
             with io.open("dictionary.txt", "a", encoding="utf-16") as f:
                 f.write(f"\n{word}")
@@ -223,14 +204,25 @@ class SpellingCheckerGUI(tk.Tk):
         else:
             print("Select only the word, without punctuation or space.")
 
-    def choose_correction(self, correction):
-        return false
+    def existing_word(self):
+        word = self.userSearch.get()
+        with io.open("dict.txt", "r", encoding="utf-16") as f:
+                        
+            if word in f.read():
+                print("same")
+                return True
+            else:
+                print("not same")
+                return False  
+            
+    def select_correct_word(self, word):
+        return False
 
     def Reset(self):
-        self.text.delete("1.0",tk.END)
+        self.text.delete("1.0",tkr.END)
         return
 
 
 if __name__ == "__main__":
-    sgui = SpellingCheckerGUI()
-    sgui.mainloop()
+    spellingCheckerGUI = SpellingCheckerGUI()
+    spellingCheckerGUI.mainloop()
