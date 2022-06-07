@@ -35,7 +35,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.initUI()
 
 
-        #self.add_into_dictionary("dfdf")
+        self.add_into_dictionary("dfdf")
     def initUI(self):
 
         #GUI
@@ -241,7 +241,7 @@ class SpellingCheckerGUI(tkr.Tk):
                     writer.writerow(word.split(" "))
 
                 messagebox.showinfo("Message","The word added successfully into dictionary.")
-                self.VwDictList.insert(tkr.END, word)
+                self.DictListBox.insert(tkr.END, word)
             else:
                 messagebox.showerror("Error","Select only the word, without space or special characters.")
         else:
