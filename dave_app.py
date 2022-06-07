@@ -1,6 +1,3 @@
-print("Status: System starting now...")
-
-import io
 import re
 import math
 import string
@@ -12,46 +9,48 @@ from nltk.tokenize import regexp_tokenize
 import tkinter as tkr
 from tkinter import ttk
 import tkinter.scrolledtext as scrolled_text
+from tkinter import messagebox
 
+import csv
 
 class SpellingCheckerGUI(tkr.Tk):
 
     def __init__(self):
-        """
-        Initializing the GUI components and reading in,
-        (cleaning?), and creation of unigrams and dictionary.
-        """
+
         super(SpellingCheckerGUI, self).__init__()
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
-        # reading the dict.txt
-        with io.open("dict.txt", "r", encoding="utf-16") as f:
-            dict_contents = f.read()
+        # reading the corpus/dictonary.csv
+    
+        with open('corpus/dictonary.csv') as f_object:
+            reader = csv.reader(f_object)
+            data = list(reader)
+        lexicon = data[0]
 
         # create dict list
-        self.dictList= sorted(set(dict_contents.split('\n')))
+        self.dictList= sorted(lexicon)
         self.non_words = []  # empty list of non-words
 
-        self.create_layout()
-        print("\nStatus: System started\n")
+        self.initUI()
 
-    def create_layout(self):
 
-        #This is where the layout of the GUI is created.
+        #self.add_into_dictionary("dfdf")
+    def initUI(self):
+
+        #GUI
 
         # Set the canvas and the frame
         canvas = tkr.Canvas(height=800, width=600)
         canvas.pack()
-        frame = tkr.Frame(bg='#F0F0F0', bd=1)  # this is the light gray background
-        frame.place(relx=0.5, rely=0.1, relwidth=0.75, relheight=0.8, anchor='n')
+        frame = tkr.Frame(bg='#F0F0F0')  # this is the light gray background
+        frame.place(relx=0.5, rely=0.0, relwidth=0.95, relheight=0.8, anchor='n')
 
-        title = tkr.Label(frame, text="Spelling Checker", anchor='n',
-                         fg="black", font="none 23 bold")
+        title = tkr.Label(frame, text="Spelling Checker", font="times 23 bold")
         title.place(relx=0.20, rely=0.01, relwidth=0.60)
-        
-        # Provide instructions to the user
-        insTitle = tkr.Label(frame, text="Instructions for user(s):", anchor='w', fg="black", font="none 10 bold")
+
+        # User Guide
+        insTitle = tkr.Label(frame, text="User guide:", anchor='w', font="none 10 bold")
         insTitle.place(relx=0.1, rely=0.07, relwidth=0.60)
         ins1 = tkr.Label(frame, text="1. Enter text in the given area.", anchor='w')
         ins1.place(relx=0.1, rely=0.10, relwidth=0.60)
@@ -69,7 +68,7 @@ class SpellingCheckerGUI(tkr.Tk):
         textlabel.place(relx=0.1, rely=0.26)
         
         # This is the big text box where user puts in their input
-        self.text = scrolled_text.ScrolledText(frame, bg="white", width=50, font="Arial 10")
+        self.text = scrolled_text.ScrolledText(frame, width=50, font="Arial 10")
         self.text.pack(expand=True, fill='both')
         self.text.place(relx=0.1, rely=0.30, relwidth=0.35, relheight=0.4)
 
@@ -80,50 +79,59 @@ class SpellingCheckerGUI(tkr.Tk):
         self.text.tag_bind("sel", '<Button-3>', self.pop_up)
 
         # This is the clear button
-        ResetButton = tkr.Button(frame, text="CLEAR", width=7, command=self.Reset)
+        ResetButton = tkr.Button(frame, text="Clear", width=7, command=self.Reset)
         ResetButton.place(relx=0.1, rely=0.71)
 
         # This is the submit button
-        SubmitButton = tkr.Button(frame, text="SUBMIT", width=7, command=self.Submit)
+        SubmitButton = tkr.Button(frame, text="Submit", width=7, command=self.Submit)
         SubmitButton.place(relx=0.20, rely=0.71)
-
-        # Original Text Label
-        originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
-        originalTextLabel.place(relx=0.1, rely=0.77)
-
-        # This text area below is user inputted box. It stores original text
-        self.originalText = scrolled_text.ScrolledText(frame, bg="white", width=50, font="Arial 10")
-        self.originalText.pack(expand=True, fill='both')
-        self.originalText.place(relx=0.1, rely=0.80, relwidth=0.80, relheight=0.4)
 
         # Dictionary Text Label
         VwDict = tkr.Label(frame, text="Dictionary:", font="none 10 normal")
         VwDict.place(relx=0.55, rely=0.26)
+
+        # The box containing all the words from the Dictionary
+        self.DictListBox = tkr.Listbox(frame, font="none 10 normal")
+
+        for dict_word in self.dictList:
+            self.DictListBox.insert(tkr.END, dict_word)
+
+        # Scrollbar should be attached to `DictListBox`
+        DictionaryDropDown = tkr.Scrollbar(self.DictListBox, orient=tkr.VERTICAL)
+        DictionaryDropDown.config(command=self.DictListBox.yview)
+        DictionaryDropDown.pack(side=tkr.RIGHT, fill=tkr.Y)
+
+        # Placing the dictionary list
+        self.DictListBox.pack(expand=True, fill='both')
+        self.DictListBox.config(yscrollcommand=DictionaryDropDown.set)
+        self.DictListBox.place(relx=0.55, rely=0.30, relwidth=0.35, relheight=0.4)
 
         # This is the search box below the dictionary
         self.userSearch = tkr.StringVar()
         searchBox = tkr.Entry(frame, textvariable=self.userSearch)
         searchBox.place(relx=0.55, rely=0.71, relwidth=0.23)
 
-        SearchButton = tkr.Button(frame, text="SEARCH", width=9, command=self.Search)
+        SearchButton = tkr.Button(frame, text="Search", width=9, command=self.Search)
         SearchButton.place(relx=0.80, rely=0.71)
 
-        # This is the box containing all the Valid Words in the Dictionary (VwDict)
-        self.VwDictList = tkr.Listbox(frame, bg='#FFFFFF', fg="black", font="none 10 normal")
+        # This is the search box below the dictionary
+        self.textAddDict = tkr.StringVar()
+        textAddDictBox = tkr.Entry(frame, textvariable=self.textAddDict)
+        textAddDictBox.place(relx=0.55, rely=0.76, relwidth=0.23)
 
-        for word in self.dictList:
-            self.VwDictList.insert(tkr.END, word)
+        TextAddDictButton = tkr.Button(frame, text="Add to Dictionary", width=15, command=self.Search)
+        TextAddDictButton.place(relx=0.80, rely=0.76)
+        
+        # Original Text Label
+        originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
+        originalTextLabel.place(relx=0.1, rely=0.77)
 
-        # Scrollbar should be attached to `VwDictList`
-        VwScrollBar = tkr.Scrollbar(self.VwDictList, orient=tkr.VERTICAL)
-        VwScrollBar.config(command=self.VwDictList.yview)
-        VwScrollBar.pack(side=tkr.RIGHT, fill=tkr.Y)
+        # This text area below is user inputted box. It stores original text
+        self.originalText = scrolled_text.ScrolledText(frame, width=50, font="Arial 10")
+        self.originalText.pack(expand=True, fill='both')
+        self.originalText.place(relx=0.1, rely=0.81, relwidth=0.80, relheight=0.7)
 
-        # Placing the dictionary list
-        self.VwDictList.pack(expand=True, fill='both')
-        self.VwDictList.config(yscrollcommand=VwScrollBar.set)
-        self.VwDictList.place(relx=0.55, rely=0.30, relwidth=0.35, relheight=0.4)
-
+        
     def pop_up(self, event):
 
         if self.text_selected():
@@ -131,30 +139,29 @@ class SpellingCheckerGUI(tkr.Tk):
 
             if text_selected in self.non_words:
                 try:
-                    nd = len(self.candidate_words(text_selected))
-                    self.popup_menu.delete(0, nd + 3)
-                    c = self.candidate_words(text_selected)
-                    if (nd == 0):
+                    suggestion_count = len(self.candidate_words(text_selected))
+                    self.popup_menu.delete(0, suggestion_count + 3)
+                    candidate_words_list = self.candidate_words(text_selected)
+                    if (suggestion_count == 0):
                         self.popup_menu.add_command(label="No suggestions.")
 
-                    if (nd > 0):
-                        self.popup_menu.add_command(label=f"{c[0][1]} | {c[0][0]}",
-                                                    command=lambda: self.select_correct_word(c[0][0]))
+                    if (suggestion_count > 0):
+                        self.popup_menu.add_command(label="candidate_words_list[0][1] | candidate_words_list[0][0]", command=lambda: self.select_correct_word(candidate_words_list[0][0]))
                         self.popup_menu.add_separator()
                     
-                    if (nd > 1):
-                            self.popup_menu.add_command(label = f"{1} | {c[1][0]}", command = lambda: self.select_correct_word(f"{c[1][0]}"))
-                    if (nd > 2):
-                            self.popup_menu.add_command(label = f"{2} | {c[2][0]}", command = lambda: self.select_correct_word(f"{c[2][0]}"))
-                    if (nd > 3):
-                            self.popup_menu.add_command(label = f"{3} | {c[3][0]}", command = lambda: self.select_correct_word(f"{c[3][0]}"))
-                    if (nd > 4):
-                            self.popup_menu.add_command(label = f"{4} | {c[4][0]}", command = lambda: self.select_correct_word(f"{c[4][0]}"))
-                    if (nd > 5):
-                            self.popup_menu.add_command(label = f"{5} | {c[5][0]}", command = lambda: self.select_correct_word(f"{c[5][0]}"))
-                    if (nd > 6):
-                            self.popup_menu.add_command(label = f"{6} | {c[6][0]}", command = lambda: self.select_correct_word(f"{c[6][0]}"))
-                    if (nd > 0):
+                    if (suggestion_count > 1):
+                            self.popup_menu.add_command(label = "candidate_words_list[1][1] | candidate_words_list[1][0]", command = lambda: self.select_correct_word(candidate_words_list[1][0]))
+                    if (suggestion_count > 2):
+                            self.popup_menu.add_command(label = "candidate_words_list[2][1] | candidate_words_list[2][0]", command = lambda: self.select_correct_word(candidate_words_list[2][0]))
+                    if (suggestion_count > 3):
+                            self.popup_menu.add_command(label = "candidate_words_list[3][1] | candidate_words_list[3][0]", command = lambda: self.select_correct_word(candidate_words_list[3][0]))
+                    if (suggestion_count > 4):
+                            self.popup_menu.add_command(label = "candidate_words_list[4][1] | candidate_words_list[4][0]", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
+                    if (suggestion_count > 5):
+                            self.popup_menu.add_command(label = "candidate_words_list[5][1] | candidate_words_list[5][0]", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
+                    if (suggestion_count > 6):
+                            self.popup_menu.add_command(label = "candidate_words_list[6][1] | candidate_words_list[6][0]", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
+                    if (suggestion_count > 0):
                         self.popup_menu.add_separator()
                         self.popup_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
 
@@ -169,6 +176,33 @@ class SpellingCheckerGUI(tkr.Tk):
     def Submit(self):
        return False
 
+    # Reference : https://datascience.stackexchange.com/questions/60019/damerau-levenshtein-edit-distance-in-python
+    def damerau_levenshtein_distance(checker_word, dictonary_word):
+
+        d = {}
+        lenstr1 = len(checker_word)
+        lenstr2 = len(dictonary_word)
+        for i in range(-1,lenstr1+1):
+            d[(i,-1)] = i+1
+        for j in range(-1,lenstr2+1):
+            d[(-1,j)] = j+1
+        
+        for i in range(lenstr1):
+            for j in range(lenstr2):
+                if checker_word[i] == dictonary_word[j]:
+                    cost = 0
+                else:
+                    cost = 1
+                d[(i,j)] = min(
+                    d[(i-1,j)] + 1, # deletion
+                    d[(i,j-1)] + 1, # insertion
+                    d[(i-1,j-1)] + cost, # substitution
+                    )
+                if i and j and checker_word[i]==dictonary_word[j-1] and checker_word[i-1] == dictonary_word[j]:
+                    d[(i,j)] = min (d[(i,j)], d[i-2,j-2] + cost) # transposition
+
+        return d[lenstr1-1,lenstr2-1]
+
     def text_selected(self):
         if self.non_words:
             self.selection_ind = self.text.tag_ranges(tkr.SEL)
@@ -178,43 +212,54 @@ class SpellingCheckerGUI(tkr.Tk):
                 return False
         else:
             return False
-
+        
     def Search(self):
-        return False
+        word = self.userSearch.get()
+        if word in self.dictList:
+            result = self.dictList.index(word)
+            self.VwDictList.selection_set(result)
+            self.VwDictList.see(result)
+        else:
+            messagebox.showerror("Not found", "No such keyword(s).")
 
     def candidate_words(self, error):
 
         return False
 
     def add_into_dictionary(self, word):
+        if(self.existing_word(word)):
+            if (word.isalpha()):
+                self.dictList.append(word)
+                #self.unigram_model.append(word)
+                #self.counts_unigram[word] = 1
+                #self.model_unigram[word] = 1 / len(self.dictList)
+                word = ","+word
 
-        if (word.isalpha() and existing_word):
-            self.dictionary.append(word)
-            self.unigrams.append(word)
-            self.counts_u[word] = 1
-            self.model_u[word] = 1 / len(self.dictList)
-            self.VwDictList.insert(tkr.END, word)
+                with open('corpus/dictonary.csv', 'a') as f_object:
+                    writer = csv.writer(f_object, delimiter = ' ')
+                    # write the data
+                    writer.writerow(word.split(" "))
 
-            with io.open("dictionary.txt", "a", encoding="utf-16") as f:
-                f.write(f"\n{word}")
-            with io.open("clean_economics.txt", "a", encoding="utf-16") as f:
-                f.write(f" {word}")
-
-            print("Successfully added word to dictionary.")
-        else:
-            print("Select only the word, without punctuation or space.")
-
-    def existing_word(self):
-        word = self.userSearch.get()
-        with io.open("dict.txt", "r", encoding="utf-16") as f:
-                        
-            if word in f.read():
-                print("same")
-                return True
+                messagebox.showinfo("Message","The word added successfully into dictionary.")
+                self.VwDictList.insert(tkr.END, word)
             else:
-                print("not same")
-                return False  
+                messagebox.showerror("Error","Select only the word, without space or special characters.")
+        else:
+            messagebox.showerror("Error","The word already exist in the dictionary")
             
+
+    def existing_word(self,word):
+        with open('corpus/dictonary.csv') as f_object:
+            reader = csv.reader(f_object)
+            data = list(reader)
+        lexicon = data[0]              
+        if word in lexicon:
+            print("same")
+            return False
+        else:
+            print("not same")
+            return True
+        
     def select_correct_word(self, word):
         return False
 
