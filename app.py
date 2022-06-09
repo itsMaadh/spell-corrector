@@ -35,7 +35,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.initUI()
 
 
-        self.add_into_dictionary("dfdf")
+        self.add_into_dictionary("sadasd")
     def initUI(self):
 
         #GUI
@@ -217,8 +217,8 @@ class SpellingCheckerGUI(tkr.Tk):
         word = self.userSearch.get()
         if word in self.dictList:
             result = self.dictList.index(word)
-            self.VwDictList.selection_set(result)
-            self.VwDictList.see(result)
+            self.DictListBox.selection_set(result)
+            self.DictListBox.see(result)
         else:
             messagebox.showerror("Not found", "No such keyword(s).")
 
@@ -233,20 +233,21 @@ class SpellingCheckerGUI(tkr.Tk):
                 #self.unigram_model.append(word)
                 #self.counts_unigram[word] = 1
                 #self.model_unigram[word] = 1 / len(self.dictList)
+                
                 word = ","+word
 
-                with open('corpus/dictonary.csv', 'a') as f_object:
-                    writer = csv.writer(f_object, delimiter = ' ')
+                with open('corpus/dictonary.csv', 'a', newline='') as f_object:
+                    writer = csv.writer(f_object, delimiter = ' ',  lineterminator='')
                     # write the data
                     writer.writerow(word.split(" "))
-
+                f_object.close()
+                
                 messagebox.showinfo("Message","The word added successfully into dictionary.")
-                self.DictListBox.insert(tkr.END, word)
+                self.DictListBox.insert(tkr.END, word.replace(",",""))
             else:
                 messagebox.showerror("Error","Select only the word, without space or special characters.")
         else:
             messagebox.showerror("Error","The word already exist in the dictionary")
-            
 
     def existing_word(self,word):
         with open('corpus/dictonary.csv') as f_object:
