@@ -35,7 +35,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.initUI()
 
 
-        self.add_into_dictionary("sadasd")
+        #self.add_into_dictionary("sadasd")
     def initUI(self):
 
         #GUI
@@ -52,43 +52,45 @@ class SpellingCheckerGUI(tkr.Tk):
         # User Guide
         insTitle = tkr.Label(frame, text="User guide:", anchor='w', font="none 10 bold")
         insTitle.place(relx=0.1, rely=0.07, relwidth=0.60)
-        ins1 = tkr.Label(frame, text="1. Enter text in the given area.", anchor='w')
+        ins1 = tkr.Label(frame, text="1. Input text in the given text area.", anchor='w')
         ins1.place(relx=0.1, rely=0.10, relwidth=0.60)
-        ins2 = tkr.Label(frame, text="2. Press the SUBMIT button.", anchor='w')
+        ins2 = tkr.Label(frame, text="2. Click on the 'Clear' button to clear the text area.", anchor='w')
         ins2.place(relx=0.1, rely=0.13, relwidth=0.60)
-        ins3 = tkr.Label(frame, text="3. Double-click a highlighted word to select it.", anchor='w')
+        ins3 = tkr.Label(frame, text="3. Click on the 'Submit' button to proceed.", anchor='w')
         ins3.place(relx=0.1, rely=0.16, relwidth=0.60)
-        ins4 = tkr.Label(frame, text="4. Right-click the selected error word.", anchor='w')
+        ins4 = tkr.Label(frame, text="4. Double-click a highlighted word to select it.", anchor='w')
         ins4.place(relx=0.1, rely=0.19, relwidth=0.60)
-        ins5 = tkr.Label(frame, text="5. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
+        ins5 = tkr.Label(frame, text="5. Right-click the selected error word.", anchor='w')
         ins5.place(relx=0.1, rely=0.22, relwidth=0.60)
+        ins6 = tkr.Label(frame, text="6. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
+        ins6.place(relx=0.1, rely=0.25, relwidth=0.60)
 
         # Text Label
         textlabel = tkr.Label(frame, text="Enter input here (500 words max)", font="none 10 normal")
-        textlabel.place(relx=0.1, rely=0.26)
+        textlabel.place(relx=0.1, rely=0.30)
         
         # This is the big text box where user puts in their input
         self.text = scrolled_text.ScrolledText(frame, width=50, font="Arial 10")
         self.text.pack(expand=True, fill='both')
-        self.text.place(relx=0.1, rely=0.30, relwidth=0.35, relheight=0.4)
+        self.text.place(relx=0.1, rely=0.34, relwidth=0.35, relheight=0.4)
 
-        # Add popup menu code, binding the right-click to selected text only
-        self.popup_menu = tkr.Menu(self, tearoff=0, background='#E0EEEE',
+        # Add right-click menu code, binding the right-click to selected text only
+        self.right_click_menu = tkr.Menu(self, tearoff=0, background='#E0EEEE',
                                   fg='black', activebackground='#C1CDCD',
                                   activeforeground='#00008B')
-        self.text.tag_bind("sel", '<Button-3>', self.pop_up)
+        self.text.tag_bind("sel", '<Button-3>', self.right_click_pop_up_menu)
 
         # This is the clear button
         ResetButton = tkr.Button(frame, text="Clear", width=7, command=self.Reset)
-        ResetButton.place(relx=0.1, rely=0.71)
+        ResetButton.place(relx=0.1, rely=0.75)
 
         # This is the submit button
         SubmitButton = tkr.Button(frame, text="Submit", width=7, command=self.Submit)
-        SubmitButton.place(relx=0.20, rely=0.71)
+        SubmitButton.place(relx=0.20, rely=0.75)
 
         # Dictionary Text Label
         VwDict = tkr.Label(frame, text="Dictionary:", font="none 10 normal")
-        VwDict.place(relx=0.55, rely=0.26)
+        VwDict.place(relx=0.55, rely=0.30)
 
         # The box containing all the words from the Dictionary
         self.DictListBox = tkr.Listbox(frame, font="none 10 normal")
@@ -104,35 +106,35 @@ class SpellingCheckerGUI(tkr.Tk):
         # Placing the dictionary list
         self.DictListBox.pack(expand=True, fill='both')
         self.DictListBox.config(yscrollcommand=DictionaryDropDown.set)
-        self.DictListBox.place(relx=0.55, rely=0.30, relwidth=0.35, relheight=0.4)
+        self.DictListBox.place(relx=0.55, rely=0.34, relwidth=0.35, relheight=0.4)
 
         # This is the search box below the dictionary
         self.userSearch = tkr.StringVar()
         searchBox = tkr.Entry(frame, textvariable=self.userSearch)
-        searchBox.place(relx=0.55, rely=0.71, relwidth=0.23)
+        searchBox.place(relx=0.55, rely=0.75, relwidth=0.23)
 
         SearchButton = tkr.Button(frame, text="Search", width=9, command=self.Search)
-        SearchButton.place(relx=0.80, rely=0.71)
+        SearchButton.place(relx=0.80, rely=0.75)
 
         # This is the search box below the dictionary
         self.textAddDict = tkr.StringVar()
         textAddDictBox = tkr.Entry(frame, textvariable=self.textAddDict)
-        textAddDictBox.place(relx=0.55, rely=0.76, relwidth=0.23)
+        textAddDictBox.place(relx=0.55, rely=0.80, relwidth=0.23)
 
         TextAddDictButton = tkr.Button(frame, text="Add to Dictionary", width=15, command=self.Search)
-        TextAddDictButton.place(relx=0.80, rely=0.76)
+        TextAddDictButton.place(relx=0.80, rely=0.80)
         
         # Original Text Label
         originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
-        originalTextLabel.place(relx=0.1, rely=0.77)
+        originalTextLabel.place(relx=0.1, rely=0.83)
 
         # This text area below is user inputted box. It stores original text
         self.originalText = scrolled_text.ScrolledText(frame, width=50, font="Arial 10")
         self.originalText.pack(expand=True, fill='both')
-        self.originalText.place(relx=0.1, rely=0.81, relwidth=0.80, relheight=0.7)
+        self.originalText.place(relx=0.1, rely=0.88, relwidth=0.80, relheight=0.9)
 
         
-    def pop_up(self, event):
+    def right_click_pop_up_menu(self, evt):
 
         if self.text_selected():
             text_selected = self.text.get(*self.selection_ind)
@@ -140,34 +142,34 @@ class SpellingCheckerGUI(tkr.Tk):
             if text_selected in self.non_words:
                 try:
                     suggestion_count = len(self.candidate_words(text_selected))
-                    self.popup_menu.delete(0, suggestion_count + 3)
+                    self.right_click_menu.delete(0, suggestion_count + 3)
                     candidate_words_list = self.candidate_words(text_selected)
                     if (suggestion_count == 0):
-                        self.popup_menu.add_command(label="No suggestions.")
+                        self.right_click_menu.add_command(label="No suggestions.")
 
                     if (suggestion_count > 0):
-                        self.popup_menu.add_command(label="candidate_words_list[0][1] | candidate_words_list[0][0]", command=lambda: self.select_correct_word(candidate_words_list[0][0]))
-                        self.popup_menu.add_separator()
+                        self.right_click_menu.add_command(label="candidate_words_list[0][1] | candidate_words_list[0][0]", command=lambda: self.select_correct_word(candidate_words_list[0][0]))
+                        self.right_click_menu.add_separator()
                     
                     if (suggestion_count > 1):
-                            self.popup_menu.add_command(label = "candidate_words_list[1][1] | candidate_words_list[1][0]", command = lambda: self.select_correct_word(candidate_words_list[1][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[1][1] | candidate_words_list[1][0]", command = lambda: self.select_correct_word(candidate_words_list[1][0]))
                     if (suggestion_count > 2):
-                            self.popup_menu.add_command(label = "candidate_words_list[2][1] | candidate_words_list[2][0]", command = lambda: self.select_correct_word(candidate_words_list[2][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[2][1] | candidate_words_list[2][0]", command = lambda: self.select_correct_word(candidate_words_list[2][0]))
                     if (suggestion_count > 3):
-                            self.popup_menu.add_command(label = "candidate_words_list[3][1] | candidate_words_list[3][0]", command = lambda: self.select_correct_word(candidate_words_list[3][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[3][1] | candidate_words_list[3][0]", command = lambda: self.select_correct_word(candidate_words_list[3][0]))
                     if (suggestion_count > 4):
-                            self.popup_menu.add_command(label = "candidate_words_list[4][1] | candidate_words_list[4][0]", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[4][1] | candidate_words_list[4][0]", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
                     if (suggestion_count > 5):
-                            self.popup_menu.add_command(label = "candidate_words_list[5][1] | candidate_words_list[5][0]", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[5][1] | candidate_words_list[5][0]", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
                     if (suggestion_count > 6):
-                            self.popup_menu.add_command(label = "candidate_words_list[6][1] | candidate_words_list[6][0]", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
+                            self.right_click_menu.add_command(label = "candidate_words_list[6][1] | candidate_words_list[6][0]", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
                     if (suggestion_count > 0):
-                        self.popup_menu.add_separator()
-                        self.popup_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
+                        self.right_click_menu.add_separator()
+                        self.right_click_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
 
-                    self.popup_menu.tk_popup(event.x_root, event.y_root)
+                    self.right_click_menu.tk_popup(evt.x_root, evt.y_root)
                 finally:
-                    self.popup_menu.grab_release()
+                    self.right_click_menu.grab_release()
             else:
                 pass
         else:
