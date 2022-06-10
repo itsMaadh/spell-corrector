@@ -21,9 +21,9 @@ class SpellingCheckerGUI(tkr.Tk):
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
-        # reading the corpus/dictonary.csv
+        # reading the corpus/dictonary.csv, updated to correct encoding.
     
-        with open('corpus/dictonary.csv') as f_object:
+        with open('corpus/dictonary.csv', encoding='iso-8859-1') as f_object:
             reader = csv.reader(f_object)
             data = list(reader)
         lexicon = data[0]
