@@ -58,12 +58,7 @@ class SpellingCheckerGUI(tkr.Tk):
         ins2.place(relx=0.1, rely=0.13, relwidth=0.60)
         ins3 = tkr.Label(frame, text="3. Click on the 'Submit' button to proceed.", anchor='w')
         ins3.place(relx=0.1, rely=0.16, relwidth=0.60)
-        ins4 = tkr.Label(frame, text="4. Double-click a highlighted word to select it.", anchor='w')
-        ins4.place(relx=0.1, rely=0.19, relwidth=0.60)
-        ins5 = tkr.Label(frame, text="5. Right-click the selected error word.", anchor='w')
-        ins5.place(relx=0.1, rely=0.22, relwidth=0.60)
-        ins6 = tkr.Label(frame, text="6. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
-        ins6.place(relx=0.1, rely=0.25, relwidth=0.60)
+
 
         # Text Label
         textlabel = tkr.Label(frame, text="Enter input here (500 words max)", font="none 10 normal")
@@ -136,14 +131,14 @@ class SpellingCheckerGUI(tkr.Tk):
         
     def right_click_pop_up_menu(self, evt):
 
-        if self.text_selected():
-            text_selected = self.text.get(*self.selection_ind)
+        if self.highlighted_text():
+            highlighted_text = self.text.get(*self.selection_ind)
 
-            if text_selected in self.non_words:
+            if highlighted_text in self.non_words:
                 try:
-                    suggestion_count = len(self.candidate_words(text_selected))
+                    suggestion_count = len(self.candidate_words(highlighted_text))
                     self.right_click_menu.delete(0, suggestion_count + 3)
-                    candidate_words_list = self.candidate_words(text_selected)
+                    candidate_words_list = self.candidate_words(highlighted_text)
                     if (suggestion_count == 0):
                         self.right_click_menu.add_command(label="No suggestions.")
 
@@ -170,10 +165,6 @@ class SpellingCheckerGUI(tkr.Tk):
                     self.right_click_menu.tk_popup(evt.x_root, evt.y_root)
                 finally:
                     self.right_click_menu.grab_release()
-            else:
-                pass
-        else:
-            pass
 
     def Submit(self):
        return False
@@ -205,15 +196,9 @@ class SpellingCheckerGUI(tkr.Tk):
 
         return d[lenstr1-1,lenstr2-1]
 
-    def text_selected(self):
-        if self.non_words:
-            self.selection_ind = self.text.tag_ranges(tkr.SEL)
-            if self.selection_ind:
-                return True
-            else:
-                return False
-        else:
-            return False
+    def highlighted_text(self):
+        
+        return False
         
     def Search(self):
         word = self.userSearch.get()
