@@ -23,7 +23,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # reading the corpus/dictonary.csv
     
-        with open('corpus/dictonary.csv') as f_object:
+        with open('corpus/dictonary.csv', encoding="ISO-8859-1") as f_object:
             reader = csv.reader(f_object)
             data = list(reader)
         lexicon = data[0]
@@ -176,7 +176,10 @@ class SpellingCheckerGUI(tkr.Tk):
             pass
 
     def Submit(self):
-       return False
+        self.non_words = []
+        self.originalText.configure(state = 'normal')
+        self.originalText.delete('1.0', tkr.END)
+        return False
 
     # Reference : https://datascience.stackexchange.com/questions/60019/damerau-levenshtein-edit-distance-in-python
     def damerau_levenshtein_distance(checker_word, dictonary_word):
@@ -238,7 +241,7 @@ class SpellingCheckerGUI(tkr.Tk):
                 
                 word = ","+word
 
-                with open('corpus/dictonary.csv', 'a', newline='') as f_object:
+                with open('corpus/dictonary.csv', 'a', newline='', encoding="ISO-8859-1") as f_object:
                     writer = csv.writer(f_object, delimiter = ' ',  lineterminator='')
                     # write the data
                     writer.writerow(word.split(" "))
@@ -252,7 +255,7 @@ class SpellingCheckerGUI(tkr.Tk):
             messagebox.showerror("Error","The word already exist in the dictionary")
 
     def existing_word(self,word):
-        with open('corpus/dictonary.csv') as f_object:
+        with open('corpus/dictonary.csv', encoding="ISO-8859-1") as f_object:
             reader = csv.reader(f_object)
             data = list(reader)
         lexicon = data[0]              
