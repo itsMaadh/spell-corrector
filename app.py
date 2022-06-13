@@ -2,8 +2,8 @@ import re
 import math
 import string
 from collections import Counter
-import nltk
 from nltk.util import ngrams
+from nltk.metrics.distance  import edit_distance
 from nltk.tokenize import regexp_tokenize
 
 import tkinter as tkr
@@ -176,9 +176,29 @@ class SpellingCheckerGUI(tkr.Tk):
             pass
 
     def Submit(self):
-       return False
+        user_input = self.text.get('1.0', 'end-1c')
+        # sanitizing the input by removing punctuation marks
+        sanitized_input = user_input.replace("?", ".").replace("!", '.')
+        # sanitizing input by removing numbers from the input
+        sanitized_input = re.sub(r'\d+', '', sanitized_input)
+        # sanitizing input by turning all the letters to lowercase
+        sanitized_input = sanitized_input.lower()
+
+        self.check_real_word_errors(sanitized_input)
+        print(sanitized_input)
+
+        return False
+
+    def check_real_word_errors(self, input):
+        input = input.split()
+        for word in input:
+            temp = [(edit_distance(word, w, 2, True),w) for w in self.dictList if w[0]==word[0]]
+            print(sorted(temp, key = lambda x: x[0])[:5])
+            # print(sorted(temp, key = lambda val:val[0])[0][1])
+
 
     # Reference : https://datascience.stackexchange.com/questions/60019/damerau-levenshtein-edit-distance-in-python
+    # dont think we need this anymore if we are using the library
     def damerau_levenshtein_distance(checker_word, dictonary_word):
 
         d = {}
