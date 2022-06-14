@@ -1,9 +1,10 @@
 import re
 import math
 import string
-from collections import Counter
 import nltk
+from collections import Counter
 from nltk.util import ngrams
+from nltk.metrics.distance  import edit_distance
 from nltk.tokenize import regexp_tokenize
 import csv
 
@@ -13,7 +14,6 @@ import tkinter.scrolledtext as scrolled_text
 from tkinter import messagebox
 
 from nltk.corpus import abc, stopwords
-from nltk import FreqDist
 
 # https://www.nltk.org/nltk_data/
 nltk.download('punkt')
@@ -29,9 +29,9 @@ class SpellingCheckerGUI(tkr.Tk):
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
-        # reading the corpus/dictonary.csv
+        # reading the corpus/dictonary.csv, updated to correct encoding.
     
-        with open('corpus/dictonary.csv', encoding="ISO-8859-1") as f_object:
+        with open('corpus/dictonary.csv', encoding='iso-8859-1') as f_object:
             reader = csv.reader(f_object)
             data = list(reader)
         lexicon = data[0]
@@ -293,18 +293,19 @@ class SpellingCheckerGUI(tkr.Tk):
         # get the user input (ui)
         user_input = self.text.get('1.0', 'end-1c')
 
-        ui = user_input
+        ui = user_input.lower()
         ui.replace("?", ".")
         ui.replace("!", '.')
         sent_list = ui.split('.')
 
         for i in range(len(sent_list)):
-            sent_list[i] = sent_list[i].lower()
             sent_list[i] = 'OSO ' + sent_list[i] + ' OEO'
 
         ui = ' '.join(sent_list)
         ui = re.sub('\s+', ' ', ui)
         ui = regexp_tokenize(ui, "[\w']+")
+        print("Split user input")
+        print(ui)
 
         # make unigrams, bigrams and trigrams out of user input
         uni = [w for w in ui if not w.isdigit()]
@@ -325,7 +326,9 @@ class SpellingCheckerGUI(tkr.Tk):
                 self.non_words.append(t[1])
 
         # print(self.dictList)
+        print("non real words")
         print(self.non_words)
+
         # real-word spellchecking
         # only occurs if there are no non-word errors
         # uses Stupid Backoff with weighted scoring on trigrams,
@@ -336,7 +339,7 @@ class SpellingCheckerGUI(tkr.Tk):
                 ll = 0.25  # weighting on left bigram
                 lt = 0.5   # weighting on trigram
                 lr = 0.25  # weighting on right bigram
-                threshold = 6e-5  # threshold score to be considered a real-word error
+                threshold = 0.0002 # 6e-5  # threshold score to be considered a real-word error
                     
                 if t in tri_model:
                     p_t = tri_model[t]
@@ -381,6 +384,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.originalText.insert(tkr.INSERT, user_input)
         self.originalText.configure(state = 'disabled')
 
+        print("Score list")
         if not self.non_words:
             print(score_list)
             print("No non-word errors.\n")
@@ -436,52 +440,64 @@ class SpellingCheckerGUI(tkr.Tk):
         else:
             messagebox.showerror("Not found", "No such keyword(s).")
 
+    def check_non_real_word_errors(self, word):
+        temp = [(w, edit_distance(word, w, 2, True)) for w in self.dictList if w[0]==word[0]] # Why must the first letter stay the same?
+        return sorted(temp, key = lambda x: x[1])[:6]
+        # print(sorted(temp, key = lambda val:val[0])[0][1])
+
     def candidate_words(self, error):
+        candidates_ = self.check_non_real_word_errors(error)
+        if candidates_[0][1] == 0:
+            candidates_.pop(0)
+        print("Candidates")
+        print(candidates_[:5])
 
-        # create empty lists so that we can store our generated candidate words
-        dist_one = []
-        dist_two = []
-        dist_three = []
 
-        # for each word in the dictionary, calculate the DL distance between
-        # that word and the error
-        for word in self.dictList:
-            if word not in self.model_u.keys():
-                continue
+        # # create empty lists so that we can store our generated candidate words
+        # dist_one = []
+        # dist_two = []
+        # dist_three = []
 
-            # this `d` is the DL distance between word and error
-            d = self.damerau_levenshtein_distance(error, word)
-            # print(word)
+        # # for each word in the dictionary, calculate the DL distance between
+        # # that word and the error
+        # for word in self.dictList:
+        #     if word not in self.model_u.keys():
+        #         continue
+
+        #     # this `d` is the DL distance between word and error
+        #     d = self.damerau_levenshtein_distance(error, word)
+        #     # print(word)
             
 
-            # if distance is 1, put that word into the dist_one list, and so on
-            # but we also group up that word with its DL distance and its 
-            # unigram probability, as calculated from the unigram model
-            # only up to edit distance 3 self.model_u
-            if d == 1: 
-                dist_one.append((word, d, self.model_u[word]))
-            elif d == 2:
-                dist_two.append((word, d, self.model_u[word]))
-            elif d == 3:
-                dist_three.append((word, d, self.model_u[word]))
-            else:
-                pass
+        #     # if distance is 1, put that word into the dist_one list, and so on
+        #     # but we also group up that word with its DL distance and its 
+        #     # unigram probability, as calculated from the unigram model
+        #     # only up to edit distance 3 self.model_u
+        #     if d == 1: 
+        #         dist_one.append((word, d, self.model_u[word]))
+        #     elif d == 2:
+        #         dist_two.append((word, d, self.model_u[word]))
+        #     elif d == 3:
+        #         dist_three.append((word, d, self.model_u[word]))
+        #     else:
+        #         pass
 
-        # this is the key to which we sort the elements in the candidate word lists
-        def sort_by_prob(element):
-            return element[2]
+        # # this is the key to which we sort the elements in the candidate word lists
+        # def sort_by_prob(element):
+        #     return element[2]
 
-        # here, we sort candidate words according to how likely they are 
-        # to appear in the corpus, according to unigram language model
-        dist_one = sorted(dist_one, key = sort_by_prob, reverse = True)
-        dist_two = sorted(dist_two, key = sort_by_prob, reverse = True)
-        dist_three = sorted(dist_three, key = sort_by_prob, reverse = True)
+        # # here, we sort candidate words according to how likely they are 
+        # # to appear in the corpus, according to unigram language model
+        # dist_one = sorted(dist_one, key = sort_by_prob, reverse = True)
+        # dist_two = sorted(dist_two, key = sort_by_prob, reverse = True)
+        # dist_three = sorted(dist_three, key = sort_by_prob, reverse = True)
 
-        # concatenate the three lists together and get the first 5 most 
-        # probable candidate corrections
-        candidates = dist_one + dist_two + dist_three
+        # # concatenate the three lists together and get the first 5 most 
+        # # probable candidate corrections
+        # candidates = dist_one + dist_two + dist_three
+        # print(candidates[:5])
 
-        return candidates[:5]
+        return candidates_[:5]
 
     def add_into_dictionary(self, word):
         if(self.existing_word(word)):
