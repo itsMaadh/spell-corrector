@@ -135,6 +135,12 @@ class SpellingCheckerGUI(tkr.Tk):
         ins2.place(relx=0.1, rely=0.13, relwidth=0.60)
         ins3 = tkr.Label(frame, text="3. Click on the 'Submit' button to proceed.", anchor='w')
         ins3.place(relx=0.1, rely=0.16, relwidth=0.60)
+        ins4 = tkr.Label(frame, text="4. Double-click a highlighted word to select it.", anchor='w')
+        ins4.place(relx=0.1, rely=0.19, relwidth=0.60)
+        ins5 = tkr.Label(frame, text="5. Right-click the selected error word.", anchor='w')
+        ins5.place(relx=0.1, rely=0.22, relwidth=0.60)
+        ins6 = tkr.Label(frame, text="6. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
+        ins6.place(relx=0.1, rely=0.25, relwidth=0.60)
 
 
         # Text Label
@@ -413,8 +419,14 @@ class SpellingCheckerGUI(tkr.Tk):
         return d[lenstr1-1,lenstr2-1]
 
     def highlighted_text(self):
-        
-        return False
+        if self.non_words:
+            self.selection_ind = self.text.tag_ranges(tkr.SEL)
+            if self.selection_ind:
+                return True
+            else:
+                return False
+        else:
+            return False
         
     def Search(self):
         word = self.userSearch.get()
