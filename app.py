@@ -5,17 +5,25 @@ from collections import Counter
 import nltk
 from nltk.util import ngrams
 from nltk.tokenize import regexp_tokenize
+import csv
 
 import tkinter as tkr
 from tkinter import ttk
 import tkinter.scrolledtext as scrolled_text
 from tkinter import messagebox
 
-import csv
+from nltk.corpus import abc, stopwords
+from nltk import FreqDist
+
+# https://www.nltk.org/nltk_data/
+nltk.download('punkt')
+nltk.download('abc')  # Australian Broadcasting Commission
+nltk.download('stopwords')
 
 class SpellingCheckerGUI(tkr.Tk):
 
     def __init__(self):
+        print("Initializing...")
 
         super(SpellingCheckerGUI, self).__init__()
         self.title("Spelling Checker")
@@ -32,10 +40,79 @@ class SpellingCheckerGUI(tkr.Tk):
         self.dictList= sorted(lexicon)
         self.non_words = []  # empty list of non-words
 
+        """ Modelling """
+        # https://www.geeksforgeeks.org/n-gram-language-modelling-with-nltk/
+
+        # input the ABC sentences
+        sents = abc.sents()
+
+        # write the removal characters such as : Stopwords and punctuation
+        stop_words = set(stopwords.words('english'))
+        string.punctuation = string.punctuation +'"'+'"'+'-'+'''+'''+'—'
+        removal_list = list(stop_words) + list(string.punctuation)+ ['lt','rt']
+
+        # generate unigrams bigrams trigrams
+        self.unigram=[]
+        bigram=[]
+        trigram=[]
+        tokenized_text=[]
+        for sentence in sents:
+            sentence = list(map(lambda x:x.lower(),sentence))
+            for word in sentence:
+                if word== '.':
+                    sentence.remove(word)
+                else:
+                    self.unigram.append(word)
+        
+            tokenized_text.append(sentence)
+            bigram.extend(list(ngrams(sentence, 2,pad_left=True, pad_right=True)))
+            trigram.extend(list(ngrams(sentence, 3, pad_left=True, pad_right=True)))
+        
+        # remove the n-grams with removable words
+        def remove_stopwords(x):    
+            y = []
+            for pair in x:
+                count = 0
+                for word in pair:
+                    if word in removal_list:
+                        count = count or 0
+                    else:
+                        count = count or 1
+                if (count==1):
+                    y.append(pair)
+            return (y)
+
+        # print(len(unigram))
+        # unigram = remove_stopwords(unigram)
+        # bigram = remove_stopwords(bigram)
+        # trigram = remove_stopwords(trigram)
+
+        # print(len(unigram))
+
+        # Create unigram model
+        N_u = len(lexicon)
+        self.counts_u = dict(Counter(self.unigram))
+	
+        model_u = {}
+        for (key,value) in zip(self.counts_u.keys(), self.counts_u.values()):
+            model_u[key] = value/N_u
+        self.model_u = model_u
+
+        # create left bigrams (the usual bigram), right bigrams and trigrams
+        self.bigramsl = list(ngrams(self.unigram, 2))
+        self.bigramsr = [(w1,w2) for (w1,w2) in zip(self.unigram[1:],
+                                                    self.unigram[:-1])]
+        self.counts_bl = dict(Counter(self.bigramsl))
+        self.counts_br = dict(Counter(self.bigramsr))
+        N_b = len(self.bigramsl)
+
+        self.trigrams = list(ngrams(self.unigram, 3))
+        self.counts_t = dict(Counter(self.trigrams))
+
+        # print(self.trigrams)
+
         self.initUI()
 
-
-        #self.add_into_dictionary("sadasd")
     def initUI(self):
 
         #GUI
@@ -133,7 +210,17 @@ class SpellingCheckerGUI(tkr.Tk):
         self.originalText.pack(expand=True, fill='both')
         self.originalText.place(relx=0.1, rely=0.88, relwidth=0.80, relheight=0.9)
 
-        
+
+    def text_selected(self):
+        if self.non_words:
+            self.selection_ind = self.text.tag_ranges(tkr.SEL)
+            if self.selection_ind:
+                return True
+            else:
+                return False
+        else:
+            return False    
+
     def right_click_pop_up_menu(self, evt):
 
         if self.text_selected():
@@ -148,21 +235,21 @@ class SpellingCheckerGUI(tkr.Tk):
                         self.right_click_menu.add_command(label="No suggestions.")
 
                     if (suggestion_count > 0):
-                        self.right_click_menu.add_command(label="candidate_words_list[0][1] | candidate_words_list[0][0]", command=lambda: self.select_correct_word(candidate_words_list[0][0]))
+                        self.right_click_menu.add_command(label=f"{candidate_words_list[0][1]} | {candidate_words_list[0][0]}", command=lambda: self.select_correct_word(candidate_words_list[0][0]))
                         self.right_click_menu.add_separator()
                     
                     if (suggestion_count > 1):
-                            self.right_click_menu.add_command(label = "candidate_words_list[1][1] | candidate_words_list[1][0]", command = lambda: self.select_correct_word(candidate_words_list[1][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[1][1]} | {candidate_words_list[1][0]}", command = lambda: self.select_correct_word(candidate_words_list[1][0]))
                     if (suggestion_count > 2):
-                            self.right_click_menu.add_command(label = "candidate_words_list[2][1] | candidate_words_list[2][0]", command = lambda: self.select_correct_word(candidate_words_list[2][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[2][1]} | {candidate_words_list[2][0]}", command = lambda: self.select_correct_word(candidate_words_list[2][0]))
                     if (suggestion_count > 3):
-                            self.right_click_menu.add_command(label = "candidate_words_list[3][1] | candidate_words_list[3][0]", command = lambda: self.select_correct_word(candidate_words_list[3][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[3][1]} | {candidate_words_list[3][0]}", command = lambda: self.select_correct_word(candidate_words_list[3][0]))
                     if (suggestion_count > 4):
-                            self.right_click_menu.add_command(label = "candidate_words_list[4][1] | candidate_words_list[4][0]", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[4][1]} | {candidate_words_list[4][0]}", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
                     if (suggestion_count > 5):
-                            self.right_click_menu.add_command(label = "candidate_words_list[5][1] | candidate_words_list[5][0]", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[5][1]} | {candidate_words_list[5][0]}", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
                     if (suggestion_count > 6):
-                            self.right_click_menu.add_command(label = "candidate_words_list[6][1] | candidate_words_list[6][0]", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
+                            self.right_click_menu.add_command(label = f"{candidate_words_list[6][1]} | {candidate_words_list[6][0]}", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
                     if (suggestion_count > 0):
                         self.right_click_menu.add_separator()
                         self.right_click_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
@@ -175,14 +262,136 @@ class SpellingCheckerGUI(tkr.Tk):
         else:
             pass
 
+    def make_bigram_model(self):
+
+        model_bl = {}
+        for key, value in zip(self.counts_bl.keys(), self.counts_bl.values()):
+            model_bl[key] = value / self.counts_u[key[0]]
+
+        model_br = {}
+        for key, value in zip(self.counts_br.keys(), self.counts_br.values()):
+            model_br[key] = value / self.counts_u[key[0]]
+
+        return model_bl, model_br
+
+
+    def make_trigram_model(self):
+
+        model_t = {}
+        for key, value in zip(self.counts_t.keys(), self.counts_t.values()):
+            model_t[key] = value / ((self.counts_bl[key[:2]] + self.counts_br[key[-1:-3:-1]]) / 2)
+
+        return model_t
+
     def Submit(self):
         self.non_words = []
+
+        # Clear textbox that displays original input
         self.originalText.configure(state = 'normal')
         self.originalText.delete('1.0', tkr.END)
-        return False
+
+        # get the user input (ui)
+        user_input = self.text.get('1.0', 'end-1c')
+
+        ui = user_input
+        ui.replace("?", ".")
+        ui.replace("!", '.')
+        sent_list = ui.split('.')
+
+        for i in range(len(sent_list)):
+            sent_list[i] = sent_list[i].lower()
+            sent_list[i] = 'OSO ' + sent_list[i] + ' OEO'
+
+        ui = ' '.join(sent_list)
+        ui = re.sub('\s+', ' ', ui)
+        ui = regexp_tokenize(ui, "[\w']+")
+
+        # make unigrams, bigrams and trigrams out of user input
+        uni = [w for w in ui if not w.isdigit()]
+        bl = list(ngrams(uni, 2))
+        br = [(w1,w2) for (w1,w2) in zip(uni[1:],uni[:-1])]
+        tri = list(ngrams(uni, 3))
+
+        # make bigrams and trigrams out of corpus
+        left_bi, right_bi = self.make_bigram_model()
+        tri_model = self.make_trigram_model()
+
+        utext = ' '.join(uni)
+
+        score_list = [] # this is the score list for real-word errors
+        for t in tri:
+            # non-word spellchecking
+            if t[1] not in self.dictList:
+                self.non_words.append(t[1])
+
+        # print(self.dictList)
+        print(self.non_words)
+        # real-word spellchecking
+        # only occurs if there are no non-word errors
+        # uses Stupid Backoff with weighted scoring on trigrams,
+        # left bigrams, and right bigrams
+        if not self.non_words:
+            for t in tri:
+                d = 0.4    # backoff discount
+                ll = 0.25  # weighting on left bigram
+                lt = 0.5   # weighting on trigram
+                lr = 0.25  # weighting on right bigram
+                threshold = 6e-5  # threshold score to be considered a real-word error
+                    
+                if t in tri_model:
+                    p_t = tri_model[t]
+                elif ((t[:2] in left_bi) and (t[-1:-3:-1] in right_bi)):
+                    p_t = (d/2)*(left_bi[t[:2]] + right_bi[t[-1:-3:-1]])
+                elif (t[:2] in left_bi):
+                    p_t = d*left_bi[t[:2]]
+                elif (t[-1:-3:-1] in right_bi):
+                    p_t = d*right_bi[t[-1:-3:-1]]
+                else:
+                    p_t = d*d*self.model_u[t[1]]
+
+                if t[:2] in left_bi:
+                    p_bl = left_bi[t[:2]]
+                else:
+                    p_bl = d*self.model_u[t[1]]
+
+                if t[-1:-3:-1] in right_bi:
+                    p_br = right_bi[t[-1:-3:-1]]
+                else:
+                    p_br = d*self.model_u[t[1]]
+
+                score = ll*p_bl + lt*p_t + lr*p_br
+                score = round(score, 3 - int(math.floor(math.log10(abs(score)))) - 1)
+                score_list.append(score)
+                if score < threshold:
+                    self.non_words.append(t[1])
+                
+        
+        # https://stackoverflow.com/questions/24819123/how-to-get-the
+        # -index-of-word-being-searched-in-tkinter-text-box
+        # code from above website
+        self.text.tag_config("red_tag", foreground = "red")
+        for err in self.non_words:
+            offset = '+%dc' % len(err)
+            pos_start = self.text.search(err, '1.0', tkr.END)
+            while pos_start:
+                pos_end = pos_start + offset
+                self.text.tag_add("red_tag", pos_start, pos_end)
+                pos_start = self.text.search(err, pos_end, tkr.END)
+        
+        self.originalText.insert(tkr.INSERT, user_input)
+        self.originalText.configure(state = 'disabled')
+
+        if not self.non_words:
+            print(score_list)
+            print("No non-word errors.\n")
+        else:
+            print(score_list)
+            print('\n')
+
+        return self.non_words
 
     # Reference : https://datascience.stackexchange.com/questions/60019/damerau-levenshtein-edit-distance-in-python
-    def damerau_levenshtein_distance(checker_word, dictonary_word):
+    def damerau_levenshtein_distance(self, checker_word, dictonary_word):
 
         d = {}
         lenstr1 = len(checker_word)
@@ -229,7 +438,50 @@ class SpellingCheckerGUI(tkr.Tk):
 
     def candidate_words(self, error):
 
-        return False
+        # create empty lists so that we can store our generated candidate words
+        dist_one = []
+        dist_two = []
+        dist_three = []
+
+        # for each word in the dictionary, calculate the DL distance between
+        # that word and the error
+        for word in self.dictList:
+            if word not in self.model_u.keys():
+                continue
+
+            # this `d` is the DL distance between word and error
+            d = self.damerau_levenshtein_distance(error, word)
+            # print(word)
+            
+
+            # if distance is 1, put that word into the dist_one list, and so on
+            # but we also group up that word with its DL distance and its 
+            # unigram probability, as calculated from the unigram model
+            # only up to edit distance 3 self.model_u
+            if d == 1: 
+                dist_one.append((word, d, self.model_u[word]))
+            elif d == 2:
+                dist_two.append((word, d, self.model_u[word]))
+            elif d == 3:
+                dist_three.append((word, d, self.model_u[word]))
+            else:
+                pass
+
+        # this is the key to which we sort the elements in the candidate word lists
+        def sort_by_prob(element):
+            return element[2]
+
+        # here, we sort candidate words according to how likely they are 
+        # to appear in the corpus, according to unigram language model
+        dist_one = sorted(dist_one, key = sort_by_prob, reverse = True)
+        dist_two = sorted(dist_two, key = sort_by_prob, reverse = True)
+        dist_three = sorted(dist_three, key = sort_by_prob, reverse = True)
+
+        # concatenate the three lists together and get the first 5 most 
+        # probable candidate corrections
+        candidates = dist_one + dist_two + dist_three
+
+        return candidates[:5]
 
     def add_into_dictionary(self, word):
         if(self.existing_word(word)):
@@ -267,7 +519,8 @@ class SpellingCheckerGUI(tkr.Tk):
             return True
         
     def select_correct_word(self, word):
-        return False
+        self.text.delete(*self.selection_ind)
+        self.text.insert(tkr.INSERT, word)
 
     def Reset(self):
         self.text.delete("1.0",tkr.END)
