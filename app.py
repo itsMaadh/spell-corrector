@@ -195,12 +195,12 @@ class SpellingCheckerGUI(tkr.Tk):
         SearchButton.place(relx=0.80, rely=0.75)
 
         # This is the search box below the dictionary
-        self.textAddDict = tkr.StringVar()
-        textAddDictBox = tkr.Entry(frame, textvariable=self.textAddDict)
-        textAddDictBox.place(relx=0.55, rely=0.80, relwidth=0.23)
+        #self.textAddDict = tkr.StringVar()
+        #textAddDictBox = tkr.Entry(frame, textvariable=self.textAddDict)
+        #textAddDictBox.place(relx=0.55, rely=0.80, relwidth=0.23)
 
-        TextAddDictButton = tkr.Button(frame, text="Add to Dictionary", width=15, command=self.Search)
-        TextAddDictButton.place(relx=0.80, rely=0.80)
+        #TextAddDictButton = tkr.Button(frame, text="Add to Dictionary", width=15, command=self.Search)
+        #TextAddDictButton.place(relx=0.80, rely=0.80)
         
         # Original Text Label
         originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
@@ -209,18 +209,8 @@ class SpellingCheckerGUI(tkr.Tk):
         # This text area below is user inputted box. It stores original text
         self.originalText = scrolled_text.ScrolledText(frame, width=50, font="Arial 10")
         self.originalText.pack(expand=True, fill='both')
-        self.originalText.place(relx=0.1, rely=0.88, relwidth=0.80, relheight=0.9)
+        self.originalText.place(relx=0.1, rely=0.80, relwidth=0.80, relheight=0.2)
 
-
-    def text_selected(self):
-        if self.non_words:
-            self.selection_ind = self.text.tag_ranges(tkr.SEL)
-            if self.selection_ind:
-                return True
-            else:
-                return False
-        else:
-            return False    
 
     def right_click_pop_up_menu(self, evt):
 
@@ -253,7 +243,7 @@ class SpellingCheckerGUI(tkr.Tk):
                             self.right_click_menu.add_command(label = f"{candidate_words_list[6][1]} | {candidate_words_list[6][0]}", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
                     if (suggestion_count > 0):
                         self.right_click_menu.add_separator()
-                        self.right_click_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(text_selected))
+                        self.right_click_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(highlighted_text))
 
                     self.right_click_menu.tk_popup(evt.x_root, evt.y_root)
                 finally:
@@ -525,10 +515,8 @@ class SpellingCheckerGUI(tkr.Tk):
             data = list(reader)
         lexicon = data[0]              
         if word in lexicon:
-            print("same")
             return False
         else:
-            print("not same")
             return True
         
     def select_correct_word(self, word):
