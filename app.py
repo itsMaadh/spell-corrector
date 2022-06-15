@@ -381,33 +381,6 @@ class SpellingCheckerGUI(tkr.Tk):
 
         return self.non_words
 
-    # Reference : https://datascience.stackexchange.com/questions/60019/damerau-levenshtein-edit-distance-in-python
-    def damerau_levenshtein_distance(self, checker_word, dictonary_word):
-
-        d = {}
-        lenstr1 = len(checker_word)
-        lenstr2 = len(dictonary_word)
-        for i in range(-1,lenstr1+1):
-            d[(i,-1)] = i+1
-        for j in range(-1,lenstr2+1):
-            d[(-1,j)] = j+1
-        
-        for i in range(lenstr1):
-            for j in range(lenstr2):
-                if checker_word[i] == dictonary_word[j]:
-                    cost = 0
-                else:
-                    cost = 1
-                d[(i,j)] = min(
-                    d[(i-1,j)] + 1, # deletion
-                    d[(i,j-1)] + 1, # insertion
-                    d[(i-1,j-1)] + cost, # substitution
-                    )
-                if i and j and checker_word[i]==dictonary_word[j-1] and checker_word[i-1] == dictonary_word[j]:
-                    d[(i,j)] = min (d[(i,j)], d[i-2,j-2] + cost) # transposition
-
-        return d[lenstr1-1,lenstr2-1]
-
     def highlighted_text(self):
         if self.non_words:
             self.selection_ind = self.text.tag_ranges(tkr.SEL)
@@ -438,51 +411,6 @@ class SpellingCheckerGUI(tkr.Tk):
             candidates_.pop(0)
         print("Candidates")
         print(candidates_[:5])
-
-
-        # # create empty lists so that we can store our generated candidate words
-        # dist_one = []
-        # dist_two = []
-        # dist_three = []
-
-        # # for each word in the dictionary, calculate the DL distance between
-        # # that word and the error
-        # for word in self.dictList:
-        #     if word not in self.model_u.keys():
-        #         continue
-
-        #     # this `d` is the DL distance between word and error
-        #     d = self.damerau_levenshtein_distance(error, word)
-        #     # print(word)
-            
-
-        #     # if distance is 1, put that word into the dist_one list, and so on
-        #     # but we also group up that word with its DL distance and its 
-        #     # unigram probability, as calculated from the unigram model
-        #     # only up to edit distance 3 self.model_u
-        #     if d == 1: 
-        #         dist_one.append((word, d, self.model_u[word]))
-        #     elif d == 2:
-        #         dist_two.append((word, d, self.model_u[word]))
-        #     elif d == 3:
-        #         dist_three.append((word, d, self.model_u[word]))
-        #     else:
-        #         pass
-
-        # # this is the key to which we sort the elements in the candidate word lists
-        # def sort_by_prob(element):
-        #     return element[2]
-
-        # # here, we sort candidate words according to how likely they are 
-        # # to appear in the corpus, according to unigram language model
-        # dist_one = sorted(dist_one, key = sort_by_prob, reverse = True)
-        # dist_two = sorted(dist_two, key = sort_by_prob, reverse = True)
-        # dist_three = sorted(dist_three, key = sort_by_prob, reverse = True)
-
-        # # concatenate the three lists together and get the first 5 most 
-        # # probable candidate corrections
-        # candidates = dist_one + dist_two + dist_three
-        # print(candidates[:5])
 
         return candidates_[:5]
 
