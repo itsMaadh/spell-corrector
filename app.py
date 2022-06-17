@@ -401,9 +401,8 @@ class SpellingCheckerGUI(tkr.Tk):
             messagebox.showerror("Not found", "No such keyword(s).")
 
     def check_non_real_word_errors(self, word):
-        temp = [(w, edit_distance(word, w, 2, True)) for w in self.dictList if w[0]==word[0]] # Why must the first letter stay the same?
+        temp = [(w, edit_distance(word, w, 2, True)) for w in self.dictList if w[0]==word[0]]
         return sorted(temp, key = lambda x: x[1])[:6]
-        # print(sorted(temp, key = lambda val:val[0])[0][1])
 
     def candidate_words(self, error):
         candidates_ = self.check_non_real_word_errors(error)
