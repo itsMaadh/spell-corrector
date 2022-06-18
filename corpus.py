@@ -9,7 +9,7 @@ import csv
 import re
 
 #%%
-def process_pdf(path, save_to="corpus/dictonary.csv"):
+def process_pdf(path, save_to="corpus/dictonary.csv", lexicon_url="corpus/dictonary.csv"):
     
     """
     Description: extract PDF file contents to produce the corpus data
@@ -25,6 +25,12 @@ def process_pdf(path, save_to="corpus/dictonary.csv"):
     # Preprocessing                    #
     #-----------------------------------
     
+    # Read exisitng base lexicon
+    with open(lexicon_url, newline='') as f:
+        reader = csv.reader(f)
+        base_lexicon = list(reader)
+    lexicon = base_lexicon[0]
+
     text = extract_text(path) # high level api function - to extract pdf text using pdfminer
     tokenizer = RegexpTokenizer('[A-z]\w+') # create a regex token object
     tokens = tokenizer.tokenize(text) # tokenize the text
@@ -37,11 +43,17 @@ def process_pdf(path, save_to="corpus/dictonary.csv"):
     
     # Remove text shorter than N and freq less than M
     filtered_unique_tokens = [words for words in unique_tokens if len(words) > 1 and freqdist[words] > 5]
-
+    filtered_unique_tokens = [x.lower() for x in filtered_unique_tokens]
+    
+    # Append both base and new lexicons
+    new_lexicon = lexicon + filtered_unique_tokens
+    unique_new_lexicon= [re.sub('[^a-zA-Z0-9]+', '', _) for _ in new_lexicon]
+    unique_new_lexicon = list(sorted(set(unique_new_lexicon)))
+    
     # Exporting to CSV File
     with open(save_to, 'w') as f:
         write = csv.writer(f)
-        write.writerow(filtered_unique_tokens)
+        write.writerow(unique_new_lexicon)
     
     #-----------------------------------
     # Generating the corpus            #
@@ -85,4 +97,14 @@ import pandas as pd
 read_file = pd.read_csv (r'corpus/dictonary.txt')
 read_file.to_csv (r'corpus/dictonary.csv', index=None)
 
+#%%
 
+my_file = open("corpus/dictonary.csv", "r")
+content = my_file.read()
+print(content)
+content = content.splitlines()
+
+# Exporting to CSV File
+with open("corpus/lexicon.csv", 'w') as f:
+    write = csv.writer(f)
+    write.writerow(content)
