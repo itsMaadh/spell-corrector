@@ -5,13 +5,11 @@ import nltk
 from collections import Counter
 from nltk.util import ngrams
 from nltk.metrics.distance  import edit_distance
-from nltk.tokenize import regexp_tokenize
 import csv
 
 import tkinter as tkr
-from tkinter import ttk
 import tkinter.scrolledtext as scrolled_text
-from tkinter import messagebox
+from tkinter import END, messagebox
 
 from nltk.corpus import abc, stopwords
 
@@ -29,13 +27,6 @@ class SpellingCheckerGUI(tkr.Tk):
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
-        # reading the corpus/dictonary.csv, updated to correct encoding.
-    
-        # with open('corpus/dictonary.csv', encoding='iso-8859-1') as f_object:
-        #     reader = csv.reader(f_object)
-        #     data = list(reader)
-        # lexicon = data[0]
-
         with open('corpus/dictonary.txt', encoding='iso-8859-1') as file:
             lines = file.readlines()
             lexicon = [line.rstrip() for line in lines]
@@ -49,6 +40,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # input the ABC sentences
         sents = abc.sents()
+        # print(sents)
 
         # write the removal characters such as : Stopwords and punctuation
         stop_words = set(stopwords.words('english'))
@@ -189,7 +181,7 @@ class SpellingCheckerGUI(tkr.Tk):
     def right_click_pop_up_menu(self, evt):
 
         if self.highlighted_text():
-            highlighted_text = self.text.get(*self.selection_ind)
+            highlighted_text = self.text.get(*self.selection_ind).lower()
 
             if highlighted_text in self.non_words:
                 try:
@@ -239,6 +231,9 @@ class SpellingCheckerGUI(tkr.Tk):
         self.originalText.configure(state = 'normal')
         self.originalText.delete('1.0', tkr.END)
 
+        # Re-colour all text black
+        self.text.tag_delete("red_tag")
+
         # get the user input (ui)
         user_input = self.text.get('1.0', 'end-1c')
 
@@ -253,7 +248,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # Testing with
         # Hi! My name? Is covid-19.
-        
+
         print("\nSanitized and split user input:")
         print(ui)
 
@@ -280,12 +275,14 @@ class SpellingCheckerGUI(tkr.Tk):
         if not self.non_words:
             for b in bigram:
                 d = 0.4
-                ll = 0.25  # weighting on left bigram
+                ll = 0.25  # weighting on bigram
                 threshold = 0.0003 # 6e-5  # threshold score to be considered a real-word error
+                if len(b[0]) == 1:
+                    continue
 
                 if b in bigram_model:
                     p_bl = bigram_model[b]
-                else:
+                elif b[0] in self.model_u:
                     p_bl = d*self.model_u[b[0]]
 
                 score = ll*p_bl
@@ -298,14 +295,14 @@ class SpellingCheckerGUI(tkr.Tk):
         # https://stackoverflow.com/questions/24819123/how-to-get-the
         # -index-of-word-being-searched-in-tkinter-text-box
         # code from above website
-        self.text.tag_config("red_tag", foreground = "red")
+        self.text.tag_config("red_tag", foreground = "#FF0000")
         for err in self.non_words:
             offset = '+%dc' % len(err)
-            pos_start = self.text.search(err, '1.0', tkr.END)
+            pos_start = self.text.search(err, '1.0', tkr.END, nocase=True)
             while pos_start:
                 pos_end = pos_start + offset
                 self.text.tag_add("red_tag", pos_start, pos_end)
-                pos_start = self.text.search(err, pos_end, tkr.END)
+                pos_start = self.text.search(err, pos_end, tkr.END, nocase=True)
         
         self.originalText.insert(tkr.INSERT, user_input)
         self.originalText.configure(state = 'disabled')
@@ -360,12 +357,10 @@ class SpellingCheckerGUI(tkr.Tk):
                 #self.counts_unigram[word] = 1
                 #self.model_unigram[word] = 1 / len(self.dictList)
                 
-                word = ","+word
+                # word = ","+word
 
-                with open('corpus/dictonary.csv', 'a', newline='', encoding="ISO-8859-1") as f_object:
-                    writer = csv.writer(f_object, delimiter = ' ',  lineterminator='')
-                    # write the data
-                    writer.writerow(word.split(" "))
+                with open('corpus/dictonary.txt', 'a', newline='', encoding="ISO-8859-1") as f_object:
+                    f_object.write(word + "\n")
                 f_object.close()
                 
                 messagebox.showinfo("Message","The word added successfully into dictionary.")
@@ -376,7 +371,7 @@ class SpellingCheckerGUI(tkr.Tk):
             messagebox.showerror("Error","The word already exist in the dictionary")
 
     def existing_word(self,word):
-        with open('corpus/dictonary.csv', encoding="ISO-8859-1") as f_object:
+        with open('corpus/dictonary.txt', encoding="ISO-8859-1") as f_object:
             reader = csv.reader(f_object)
             data = list(reader)
         lexicon = data[0]              
