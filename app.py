@@ -242,18 +242,19 @@ class SpellingCheckerGUI(tkr.Tk):
         # get the user input (ui)
         user_input = self.text.get('1.0', 'end-1c')
 
-        ui = user_input.lower()
-        ui.replace("?", ".")
-        ui.replace("!", '.')
-        sent_list = ui.split('.')
+        # sanitizing input by removing non-alphanumerics from the input
+        sanitized_input = re.sub("[^a-zA-Z0-9\s\-']+", "", user_input)
+        # remove any extra whitespaces
+        sanitized_input = re.sub(" +", " ", sanitized_input)
+        # sanitizing input by turning all the letters to lowercase
+        sanitized_input = sanitized_input.lower()
+        # split input by whitespaces
+        ui = sanitized_input.split(" ")
 
-        # for i in range(len(sent_list)):
-        #     sent_list[i] = 'OSO ' + sent_list[i] + ' OEO'
-
-        ui = ' '.join(sent_list)
-        ui = re.sub('\s+', ' ', ui)
-        ui = regexp_tokenize(ui, "[\w']+")
-        print("Split user input")
+        # Testing with
+        # Hi! My name? Is covid-19.
+        
+        print("\nSanitized and split user input:")
         print(ui)
 
         # make unigrams and bigrams out of user input
@@ -270,7 +271,7 @@ class SpellingCheckerGUI(tkr.Tk):
                 self.non_words.append(u)
 
         # print(self.dictList)
-        print("non real words")
+        print("\nNon-real words found:")
         print(self.non_words)
 
         # real-word spellchecking
@@ -309,7 +310,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.originalText.insert(tkr.INSERT, user_input)
         self.originalText.configure(state = 'disabled')
 
-        print("Score list")
+        print("\nScore list")
         if not self.non_words:
             print(score_list)
             print("No non-word errors.\n")
