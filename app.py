@@ -31,10 +31,14 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # reading the corpus/dictonary.csv, updated to correct encoding.
     
-        with open('corpus/dictonary.csv', encoding='iso-8859-1') as f_object:
-            reader = csv.reader(f_object)
-            data = list(reader)
-        lexicon = data[0]
+        # with open('corpus/dictonary.csv', encoding='iso-8859-1') as f_object:
+        #     reader = csv.reader(f_object)
+        #     data = list(reader)
+        # lexicon = data[0]
+
+        with open('corpus/dictonary.txt', encoding='iso-8859-1') as file:
+            lines = file.readlines()
+            lexicon = [line.rstrip() for line in lines]
 
         # create dict list
         self.dictList= sorted(lexicon)
@@ -51,7 +55,7 @@ class SpellingCheckerGUI(tkr.Tk):
         string.punctuation = string.punctuation +'"'+'"'+'-'+'''+'''+'—'
         removal_list = list(stop_words) + list(string.punctuation)+ ['lt','rt']
 
-        # generate unigrams bigrams trigrams
+        # generate unigrams bigrams
         self.unigram=[]
         bigram=[]
         trigram=[]
@@ -67,27 +71,6 @@ class SpellingCheckerGUI(tkr.Tk):
             tokenized_text.append(sentence)
             bigram.extend(list(ngrams(sentence, 2,pad_left=True, pad_right=True)))
             trigram.extend(list(ngrams(sentence, 3, pad_left=True, pad_right=True)))
-        
-        # remove the n-grams with removable words
-        def remove_stopwords(x):    
-            y = []
-            for pair in x:
-                count = 0
-                for word in pair:
-                    if word in removal_list:
-                        count = count or 0
-                    else:
-                        count = count or 1
-                if (count==1):
-                    y.append(pair)
-            return (y)
-
-        # print(len(unigram))
-        # unigram = remove_stopwords(unigram)
-        # bigram = remove_stopwords(bigram)
-        # trigram = remove_stopwords(trigram)
-
-        # print(len(unigram))
 
         # Create unigram model
         N_u = len(lexicon)
@@ -98,18 +81,9 @@ class SpellingCheckerGUI(tkr.Tk):
             model_u[key] = value/N_u
         self.model_u = model_u
 
-        # create left bigrams (the usual bigram), right bigrams and trigrams
+        # create bigram
         self.bigramsl = list(ngrams(self.unigram, 2))
-        self.bigramsr = [(w1,w2) for (w1,w2) in zip(self.unigram[1:],
-                                                    self.unigram[:-1])]
         self.counts_bl = dict(Counter(self.bigramsl))
-        self.counts_br = dict(Counter(self.bigramsr))
-        N_b = len(self.bigramsl)
-
-        self.trigrams = list(ngrams(self.unigram, 3))
-        self.counts_t = dict(Counter(self.trigrams))
-
-        # print(self.trigrams)
 
         self.initUI()
 
@@ -255,20 +229,8 @@ class SpellingCheckerGUI(tkr.Tk):
         for key, value in zip(self.counts_bl.keys(), self.counts_bl.values()):
             model_bl[key] = value / self.counts_u[key[0]]
 
-        model_br = {}
-        for key, value in zip(self.counts_br.keys(), self.counts_br.values()):
-            model_br[key] = value / self.counts_u[key[0]]
+        return model_bl
 
-        return model_bl, model_br
-
-
-    def make_trigram_model(self):
-
-        model_t = {}
-        for key, value in zip(self.counts_t.keys(), self.counts_t.values()):
-            model_t[key] = value / ((self.counts_bl[key[:2]] + self.counts_br[key[-1:-3:-1]]) / 2)
-
-        return model_t
 
     def Submit(self):
         self.non_words = []
@@ -285,8 +247,8 @@ class SpellingCheckerGUI(tkr.Tk):
         ui.replace("!", '.')
         sent_list = ui.split('.')
 
-        for i in range(len(sent_list)):
-            sent_list[i] = 'OSO ' + sent_list[i] + ' OEO'
+        # for i in range(len(sent_list)):
+        #     sent_list[i] = 'OSO ' + sent_list[i] + ' OEO'
 
         ui = ' '.join(sent_list)
         ui = re.sub('\s+', ' ', ui)
@@ -294,23 +256,18 @@ class SpellingCheckerGUI(tkr.Tk):
         print("Split user input")
         print(ui)
 
-        # make unigrams, bigrams and trigrams out of user input
+        # make unigrams and bigrams out of user input
         uni = [w for w in ui if not w.isdigit()]
-        bl = list(ngrams(uni, 2))
-        br = [(w1,w2) for (w1,w2) in zip(uni[1:],uni[:-1])]
-        tri = list(ngrams(uni, 3))
+        bigram = list(ngrams(uni, 2))
 
-        # make bigrams and trigrams out of corpus
-        left_bi, right_bi = self.make_bigram_model()
-        tri_model = self.make_trigram_model()
-
-        utext = ' '.join(uni)
+        # make bigram out of corpus
+        bigram_model = self.make_bigram_model()
 
         score_list = [] # this is the score list for real-word errors
-        for t in tri:
+        for u in uni:
             # non-word spellchecking
-            if t[1] not in self.dictList:
-                self.non_words.append(t[1])
+            if u not in self.dictList:
+                self.non_words.append(u)
 
         # print(self.dictList)
         print("non real words")
@@ -318,42 +275,23 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # real-word spellchecking
         # only occurs if there are no non-word errors
-        # uses Stupid Backoff with weighted scoring on trigrams,
-        # left bigrams, and right bigrams
+        # uses bigram model
         if not self.non_words:
-            for t in tri:
-                d = 0.4    # backoff discount
+            for b in bigram:
+                d = 0.4
                 ll = 0.25  # weighting on left bigram
-                lt = 0.5   # weighting on trigram
-                lr = 0.25  # weighting on right bigram
-                threshold = 0.0002 # 6e-5  # threshold score to be considered a real-word error
-                    
-                if t in tri_model:
-                    p_t = tri_model[t]
-                elif ((t[:2] in left_bi) and (t[-1:-3:-1] in right_bi)):
-                    p_t = (d/2)*(left_bi[t[:2]] + right_bi[t[-1:-3:-1]])
-                elif (t[:2] in left_bi):
-                    p_t = d*left_bi[t[:2]]
-                elif (t[-1:-3:-1] in right_bi):
-                    p_t = d*right_bi[t[-1:-3:-1]]
-                else:
-                    p_t = d*d*self.model_u[t[1]]
+                threshold = 0.0003 # 6e-5  # threshold score to be considered a real-word error
 
-                if t[:2] in left_bi:
-                    p_bl = left_bi[t[:2]]
+                if b in bigram_model:
+                    p_bl = bigram_model[b]
                 else:
-                    p_bl = d*self.model_u[t[1]]
+                    p_bl = d*self.model_u[b[0]]
 
-                if t[-1:-3:-1] in right_bi:
-                    p_br = right_bi[t[-1:-3:-1]]
-                else:
-                    p_br = d*self.model_u[t[1]]
-
-                score = ll*p_bl + lt*p_t + lr*p_br
+                score = ll*p_bl
                 score = round(score, 3 - int(math.floor(math.log10(abs(score)))) - 1)
                 score_list.append(score)
                 if score < threshold:
-                    self.non_words.append(t[1])
+                    self.non_words.append(b[0])
                 
         
         # https://stackoverflow.com/questions/24819123/how-to-get-the
