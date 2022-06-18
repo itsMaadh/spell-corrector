@@ -1,7 +1,5 @@
 import re
 import math
-import string
-import nltk
 from collections import Counter
 from nltk.util import ngrams
 from nltk.metrics.distance  import edit_distance
@@ -10,13 +8,6 @@ import csv
 import tkinter as tkr
 import tkinter.scrolledtext as scrolled_text
 from tkinter import END, messagebox
-
-from nltk.corpus import abc, stopwords
-
-# https://www.nltk.org/nltk_data/
-nltk.download('punkt')
-nltk.download('abc')  # Australian Broadcasting Commission
-nltk.download('stopwords')
 
 class SpellingCheckerGUI(tkr.Tk):
 
@@ -27,6 +18,7 @@ class SpellingCheckerGUI(tkr.Tk):
         self.title("Spelling Checker")
         self.minsize(800, 600)
 
+        # read dictionary
         with open('corpus/dictonary.txt', encoding='iso-8859-1') as file:
             lines = file.readlines()
             lexicon = [line.rstrip() for line in lines]
@@ -35,34 +27,16 @@ class SpellingCheckerGUI(tkr.Tk):
         self.dictList= sorted(lexicon)
         self.non_words = []  # empty list of non-words
 
-        """ Modelling """
-        # https://www.geeksforgeeks.org/n-gram-language-modelling-with-nltk/
+        # read corpus
+        with open('corpus/corpus.txt', encoding='iso-8859-1') as file:
+            lines = file.readlines()
+            corpus_text = lines[0].split(' ')
 
-        # input the ABC sentences
-        sents = abc.sents()
-        # print(sents)
-
-        # write the removal characters such as : Stopwords and punctuation
-        stop_words = set(stopwords.words('english'))
-        string.punctuation = string.punctuation +'"'+'"'+'-'+'''+'''+'—'
-        removal_list = list(stop_words) + list(string.punctuation)+ ['lt','rt']
-
-        # generate unigrams bigrams
-        self.unigram=[]
-        bigram=[]
-        trigram=[]
-        tokenized_text=[]
-        for sentence in sents:
-            sentence = list(map(lambda x:x.lower(),sentence))
-            for word in sentence:
-                if word== '.':
-                    sentence.remove(word)
-                else:
-                    self.unigram.append(word)
-        
-            tokenized_text.append(sentence)
-            bigram.extend(list(ngrams(sentence, 2,pad_left=True, pad_right=True)))
-            trigram.extend(list(ngrams(sentence, 3, pad_left=True, pad_right=True)))
+        self.unigram = []
+        for word in corpus_text:
+            # Only include alphanumeric words that are not numeric and not single letters
+            if re.match("\w+", word) and not word.isnumeric() and len(word) != 1:
+                self.unigram.append(word.lower())
 
         # Create unigram model
         N_u = len(lexicon)
@@ -247,7 +221,7 @@ class SpellingCheckerGUI(tkr.Tk):
         ui = sanitized_input.split(" ")
 
         # Testing with
-        # Hi! My name? Is covid-19.
+        # The Latest reaches on COVID 19 Treatments and Medications
 
         print("\nSanitized and split user input:")
         print(ui)
@@ -258,6 +232,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # make bigram out of corpus
         bigram_model = self.make_bigram_model()
+        # print(bigram_model)
 
         score_list = [] # this is the score list for real-word errors
         for u in uni:
@@ -274,9 +249,9 @@ class SpellingCheckerGUI(tkr.Tk):
         # uses bigram model
         if not self.non_words:
             for b in bigram:
-                d = 0.4
-                ll = 0.25  # weighting on bigram
-                threshold = 0.0003 # 6e-5  # threshold score to be considered a real-word error
+                d = 0.04
+                ll = 1 # 0.25  # weighting on bigram
+                threshold = 6e-5  # threshold score to be considered a real-word error
                 if len(b[0]) == 1:
                     continue
 
