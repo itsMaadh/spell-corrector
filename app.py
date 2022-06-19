@@ -25,7 +25,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
         # create dict list
         self.dictList= sorted(lexicon)
-        self.non_words = []  # empty list of non-words
+        self.non_real_words = []  # empty list of non-words
 
         # read corpus
         with open('corpus/corpus.txt', encoding='iso-8859-1') as file:
@@ -77,10 +77,10 @@ class SpellingCheckerGUI(tkr.Tk):
         ins3.place(relx=0.1, rely=0.16, relwidth=0.60)
         ins4 = tkr.Label(frame, text="4. Double-click a highlighted word to select it.", anchor='w')
         ins4.place(relx=0.1, rely=0.19, relwidth=0.60)
-        ins5 = tkr.Label(frame, text="5. Right-click the selected error word.", anchor='w')
+        ins5 = tkr.Label(frame, text="5. Right-click the highlighted error word.", anchor='w')
         ins5.place(relx=0.1, rely=0.22, relwidth=0.60)
-        ins6 = tkr.Label(frame, text="6. Choose one candidate correction word, or add the selected word to dictionary.", anchor='w')
-        ins6.place(relx=0.1, rely=0.25, relwidth=0.60)
+        ins6 = tkr.Label(frame, text="6. Choose one candidate correction word, or add the selected word into dictionary.", anchor='w')
+        ins6.place(relx=0.1, rely=0.25, relwidth=0.70)
 
 
         # Text Label
@@ -133,14 +133,6 @@ class SpellingCheckerGUI(tkr.Tk):
 
         SearchButton = tkr.Button(frame, text="Search", width=9, command=self.Search)
         SearchButton.place(relx=0.80, rely=0.75)
-
-        # This is the search box below the dictionary
-        #self.textAddDict = tkr.StringVar()
-        #textAddDictBox = tkr.Entry(frame, textvariable=self.textAddDict)
-        #textAddDictBox.place(relx=0.55, rely=0.80, relwidth=0.23)
-
-        #TextAddDictButton = tkr.Button(frame, text="Add to Dictionary", width=15, command=self.Search)
-        #TextAddDictButton.place(relx=0.80, rely=0.80)
         
         # Original Text Label
         originalTextLabel = tkr.Label(frame, text="Original Text:", font="none 10 normal")
@@ -157,7 +149,7 @@ class SpellingCheckerGUI(tkr.Tk):
         if self.highlighted_text():
             highlighted_text = self.text.get(*self.selection_ind).lower()
 
-            if highlighted_text in self.non_words:
+            if highlighted_text in self.non_real_words:
                 try:
                     suggestion_count = len(self.candidate_words(highlighted_text))
                     self.right_click_menu.delete(0, suggestion_count + 3)
@@ -179,8 +171,6 @@ class SpellingCheckerGUI(tkr.Tk):
                             self.right_click_menu.add_command(label = f"{candidate_words_list[4][1]} | {candidate_words_list[4][0]}", command = lambda: self.select_correct_word(candidate_words_list[4][0]))
                     if (suggestion_count > 5):
                             self.right_click_menu.add_command(label = f"{candidate_words_list[5][1]} | {candidate_words_list[5][0]}", command = lambda: self.select_correct_word(candidate_words_list[5][0]))
-                    if (suggestion_count > 6):
-                            self.right_click_menu.add_command(label = f"{candidate_words_list[6][1]} | {candidate_words_list[6][0]}", command = lambda: self.select_correct_word(candidate_words_list[6][0]))
                     if (suggestion_count > 0):
                         self.right_click_menu.add_separator()
                         self.right_click_menu.add_command(label="Add into dictionary", command=lambda: self.add_into_dictionary(highlighted_text))
@@ -199,7 +189,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
 
     def Submit(self):
-        self.non_words = []
+        self.non_real_words = []
 
         # Clear textbox that displays original input
         self.originalText.configure(state = 'normal')
@@ -238,16 +228,16 @@ class SpellingCheckerGUI(tkr.Tk):
         for u in uni:
             # non-word spellchecking
             if u not in self.dictList:
-                self.non_words.append(u)
+                self.non_real_words.append(u)
 
         # print(self.dictList)
         print("\nNon-real words found:")
-        print(self.non_words)
+        print(self.non_real_words)
 
         # real-word spellchecking
         # only occurs if there are no non-word errors
         # uses bigram model
-        if not self.non_words:
+        if not self.non_real_words:
             for b in bigram:
                 d = 0.04
                 ll = 1 # 0.25  # weighting on bigram
@@ -264,14 +254,14 @@ class SpellingCheckerGUI(tkr.Tk):
                 score = round(score, 3 - int(math.floor(math.log10(abs(score)))) - 1)
                 score_list.append(score)
                 if score < threshold:
-                    self.non_words.append(b[0])
+                    self.non_real_words.append(b[0])
                 
         
         # https://stackoverflow.com/questions/24819123/how-to-get-the
         # -index-of-word-being-searched-in-tkinter-text-box
         # code from above website
         self.text.tag_config("red_tag", foreground = "#FF0000")
-        for err in self.non_words:
+        for err in self.non_real_words:
             offset = '+%dc' % len(err)
             pos_start = self.text.search(err, '1.0', tkr.END, nocase=True)
             while pos_start:
@@ -283,17 +273,17 @@ class SpellingCheckerGUI(tkr.Tk):
         self.originalText.configure(state = 'disabled')
 
         print("\nScore list")
-        if not self.non_words:
+        if not self.non_real_words:
             print(score_list)
             print("No non-word errors.\n")
         else:
             print(score_list)
             print('\n')
 
-        return self.non_words
+        return self.non_real_words
 
     def highlighted_text(self):
-        if self.non_words:
+        if self.non_real_words:
             self.selection_ind = self.text.tag_ranges(tkr.SEL)
             if self.selection_ind:
                 return True
@@ -328,11 +318,6 @@ class SpellingCheckerGUI(tkr.Tk):
         if(self.existing_word(word)):
             if (word.isalpha()):
                 self.dictList.append(word)
-                #self.unigram_model.append(word)
-                #self.counts_unigram[word] = 1
-                #self.model_unigram[word] = 1 / len(self.dictList)
-                
-                # word = ","+word
 
                 with open('corpus/dictonary.txt', 'a', newline='', encoding="ISO-8859-1") as f_object:
                     f_object.write(word + "\n")
