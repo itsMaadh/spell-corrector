@@ -239,7 +239,7 @@ class SpellingCheckerGUI(tkr.Tk):
         # uses bigram model
         if not self.non_real_words:
             for b in bigram:
-                d = 0.04
+                d = 0.4
                 ll = 1 # 0.25  # weighting on bigram
                 threshold = 6e-5  # threshold score to be considered a real-word error
                 if len(b[0]) == 1:
