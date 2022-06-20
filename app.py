@@ -316,17 +316,15 @@ class SpellingCheckerGUI(tkr.Tk):
 
     def add_into_dictionary(self, word):
         if(self.non_existing_word(word)):
-            if (word.isalpha()):
-                self.dictList.append(word)
+            self.dictList.append(word)
 
-                with open('corpus/dictonary.txt', 'a', newline='', encoding="ISO-8859-1") as f_object:
-                    f_object.write(word + "\n")
+            with open('corpus/dictonary.txt', 'a', newline='', encoding="ISO-8859-1") as f_object:
+                f_object.write(word + "\n")
                 f_object.close()
-                
-                messagebox.showinfo("Message","The word added successfully into dictionary.")
-                self.DictListBox.insert(tkr.END, word.replace(",",""))
-            else:
-                messagebox.showerror("Error","Select only the word, without space or special characters.")
+                    
+            messagebox.showinfo("Message","The word added successfully into dictionary.")
+            self.DictListBox.insert(tkr.END, word.replace(",",""))
+
         else:
             messagebox.showerror("Error","The word already exist in the dictionary")
 
