@@ -315,7 +315,7 @@ class SpellingCheckerGUI(tkr.Tk):
         return candidates_[:5]
 
     def add_into_dictionary(self, word):
-        if(self.existing_word(word)):
+        if(self.non_existing_word(word)):
             if (word.isalpha()):
                 self.dictList.append(word)
 
@@ -330,15 +330,18 @@ class SpellingCheckerGUI(tkr.Tk):
         else:
             messagebox.showerror("Error","The word already exist in the dictionary")
 
-    def existing_word(self,word):
-        with open('corpus/dictonary.txt', encoding="ISO-8859-1") as f_object:
-            reader = csv.reader(f_object)
-            data = list(reader)
-        lexicon = data[0]              
-        if word in lexicon:
-            return False
-        else:
-            return True
+    def non_existing_word(self,word):
+        #with open('corpus/dictonary.txt', encoding="ISO-8859-1") as f_object:
+        #    reader = csv.reader(f_object)
+        #    data = list(reader)
+        #    lexicon = data[0]
+        with open('corpus/dictonary.txt', encoding='iso-8859-1') as file:
+            lines = file.readlines()
+            lexicon = [line.rstrip() for line in lines]
+            if word in lexicon:
+                return False
+            else:
+                return True
         
     def select_correct_word(self, word):
         self.text.delete(*self.selection_ind)
