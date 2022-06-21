@@ -301,18 +301,47 @@ class SpellingCheckerGUI(tkr.Tk):
         else:
             messagebox.showerror("Not found", "No such keyword(s).")
 
-    def check_non_real_word_errors(self, word):
+    # function not needed with the refactor
+    # def check_non_real_word_errors(self, word):
+    #     temp = [(w, edit_distance(word, w, 2, True)) for w in self.dictList if w[0]==word[0]]
+    #     print(sorted(temp, key = lambda val:val[0]))
+    #     return sorted(temp, key = lambda x: x[1])[:6]
+
+    def candidate_words(self, word):
         temp = [(w, edit_distance(word, w, 2, True)) for w in self.dictList if w[0]==word[0]]
-        return sorted(temp, key = lambda x: x[1])[:6]
+        # get a sorted listed of edit distances for each word
+        all_candidates = sorted(temp, key = lambda val:val[0])
 
-    def candidate_words(self, error):
-        candidates_ = self.check_non_real_word_errors(error)
-        if candidates_[0][1] == 0:
-            candidates_.pop(0)
-        print("Candidates")
-        print(candidates_[:5])
+        # create a list of candidates that are within the edit distance threshold
+        distance_one = []
+        distance_two = []
+        distance_three = []
 
-        return candidates_[:5]
+        for candidate in all_candidates:
+            # if the edit distance is not 0, execute the following
+            if candidate[1] != 0:
+                # if the edit distance is 1, add the word to the list
+                # and the unigram probability of the word appearing
+                # in the dictionary
+                if(candidate[1] == 1):
+                    distance_one.append((candidate[0], candidate[1], self.model_u(candidate[0])))
+                elif(candidate[1] == 2):
+                    distance_two.append((candidate[0], candidate[1], self.model_u(candidate[0])))
+                elif(candidate[1] == 3):
+                    distance_three.append((candidate[0], candidate[1], self.model_u(candidate[0])))
+                else:
+                    pass
+        
+        # sort the list of candidates by the unigram probability
+        distance_one = sorted(distance_one, key=lambda candidate:candidate[1], reverse=True)
+        distance_two = sorted(distance_two, key=lambda candidate:candidate[1], reverse=True)
+        distance_three = sorted(distance_three, key=lambda candidate:candidate[1], reverse=True)
+
+        # combine all the lists of candidates
+        candidates = distance_one + distance_two + distance_three
+
+        # return the top 5 candidates
+        return candidates[:5]
 
     def add_into_dictionary(self, word):
         if(self.non_existing_word(word)):
