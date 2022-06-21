@@ -306,10 +306,13 @@ class SpellingCheckerGUI(tkr.Tk):
         # get a sorted listed of edit distances for each word
         # print(sorted(temp, key = lambda val:val[1]))
         all_candidates = sorted(temp, key = lambda val:val[1])
+        if all_candidates[0][1] == 0:
+            all_candidates.pop(0)
         
         # if it is a non-real word, get top 5 from dictionary
         # else get top 5 edit distance and use the unigram model as well
         if word in self.non_real_words:
+            print('Candidates\n', all_candidates[:5])
             return all_candidates[:5]
         else:
             # create a list of candidates that are within the edit distance threshold
@@ -318,8 +321,6 @@ class SpellingCheckerGUI(tkr.Tk):
             distance_three = []
 
             for candidate in all_candidates:
-                # if the edit distance is not 0, execute the following
-                if candidate[1] != 0:
                     # if the edit distance is 1, add the word to the list
                     # and the unigram probability of the word appearing
                     # in the dictionary
@@ -344,6 +345,7 @@ class SpellingCheckerGUI(tkr.Tk):
             candidates = distance_one + distance_two + distance_three
 
             # return the top 5 candidates
+            print('Candidates\n', candidates[:5])
             return candidates[:5]
 
     def add_into_dictionary(self, word):
