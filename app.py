@@ -3,7 +3,6 @@ import math
 from collections import Counter
 from nltk.util import ngrams
 from nltk.metrics.distance  import edit_distance
-import csv
 
 import tkinter as tkr
 import tkinter.scrolledtext as scrolled_text
@@ -26,6 +25,7 @@ class SpellingCheckerGUI(tkr.Tk):
         # create dict list
         self.dictList= sorted(lexicon)
         self.non_real_words = []  # empty list of non-words
+        self.real_word_errors = [] # empty list of real word errors
 
         # read corpus
         with open('corpus/corpus.txt', encoding='iso-8859-1') as file:
@@ -149,7 +149,7 @@ class SpellingCheckerGUI(tkr.Tk):
         if self.highlighted_text():
             highlighted_text = self.text.get(*self.selection_ind).lower()
 
-            if highlighted_text in self.non_real_words:
+            if highlighted_text in self.non_real_words or highlighted_text in self.real_word_errors:
                 try:
                     suggestion_count = len(self.candidate_words(highlighted_text))
                     self.right_click_menu.delete(0, suggestion_count + 3)
@@ -230,9 +230,7 @@ class SpellingCheckerGUI(tkr.Tk):
             if u not in self.dictList:
                 self.non_real_words.append(u)
 
-        # print(self.dictList)
-        print("\nNon-real words found:")
-        print(self.non_real_words)
+        self.show_errors_on_gui(self.non_real_words)
 
         # real-word spellchecking
         # only occurs if there are no non-word errors
@@ -254,33 +252,37 @@ class SpellingCheckerGUI(tkr.Tk):
                 score = round(score, 3 - int(math.floor(math.log10(abs(score)))) - 1)
                 score_list.append(score)
                 if score < threshold:
-                    self.non_real_words.append(b[0])
-                
-        
+                    self.real_word_errors.append(b[0])
+
+        self.originalText.insert(tkr.INSERT, user_input)
+        self.originalText.configure(state = 'disabled')
+
+        self.show_errors_on_gui(self.real_word_errors)
+
+        print("\nScore list")
+        if self.real_word_errors:
+            print(score_list)
+            print('Real-word errors found:')
+            print(self.real_word_errors)
+            print("No non-word errors.\n")
+        else:
+            print("\nNon-real words found:")
+            print(self.non_real_words)
+
+        return self.non_real_words
+
+    def show_errors_on_gui(self, error_list):
         # https://stackoverflow.com/questions/24819123/how-to-get-the
         # -index-of-word-being-searched-in-tkinter-text-box
         # code from above website
         self.text.tag_config("red_tag", foreground = "#FF0000")
-        for err in self.non_real_words:
+        for err in error_list:
             offset = '+%dc' % len(err)
             pos_start = self.text.search(err, '1.0', tkr.END, nocase=True)
             while pos_start:
                 pos_end = pos_start + offset
                 self.text.tag_add("red_tag", pos_start, pos_end)
                 pos_start = self.text.search(err, pos_end, tkr.END, nocase=True)
-        
-        self.originalText.insert(tkr.INSERT, user_input)
-        self.originalText.configure(state = 'disabled')
-
-        print("\nScore list")
-        if not self.non_real_words:
-            print(score_list)
-            print("No non-word errors.\n")
-        else:
-            print(score_list)
-            print('\n')
-
-        return self.non_real_words
 
     def highlighted_text(self):
         if self.non_real_words:
