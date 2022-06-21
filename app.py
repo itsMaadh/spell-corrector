@@ -327,9 +327,9 @@ class SpellingCheckerGUI(tkr.Tk):
                     pass
         
         # sort the list of candidates by the unigram probability
-        distance_one = sorted(distance_one, key=lambda candidate:candidate[1], reverse=True)
-        distance_two = sorted(distance_two, key=lambda candidate:candidate[1], reverse=True)
-        distance_three = sorted(distance_three, key=lambda candidate:candidate[1], reverse=True)
+        distance_one = sorted(distance_one, key=lambda candidate:candidate[2], reverse=True)
+        distance_two = sorted(distance_two, key=lambda candidate:candidate[2], reverse=True)
+        distance_three = sorted(distance_three, key=lambda candidate:candidate[2], reverse=True)
 
         # combine all the lists of candidates
         candidates = distance_one + distance_two + distance_three
