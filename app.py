@@ -190,6 +190,7 @@ class SpellingCheckerGUI(tkr.Tk):
 
     def Submit(self):
         self.non_real_words = []
+        self.real_word_errors = []
 
         # Clear textbox that displays original input
         self.originalText.configure(state = 'normal')
@@ -285,7 +286,7 @@ class SpellingCheckerGUI(tkr.Tk):
                 pos_start = self.text.search(err, pos_end, tkr.END, nocase=True)
 
     def highlighted_text(self):
-        if self.non_real_words:
+        if self.non_real_words or self.real_word_errors:
             self.selection_ind = self.text.tag_ranges(tkr.SEL)
             if self.selection_ind:
                 return True
