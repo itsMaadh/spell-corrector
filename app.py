@@ -211,9 +211,6 @@ class SpellingCheckerGUI(tkr.Tk):
         # split input by whitespaces
         ui = sanitized_input.split(" ")
 
-        # Testing with
-        # The Latest reaches on COVID 19 Treatments and Medications
-
         print("\nSanitized and split user input:")
         print(ui)
 
